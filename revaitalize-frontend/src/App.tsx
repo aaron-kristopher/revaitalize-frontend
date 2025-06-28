@@ -1,12 +1,17 @@
-import { useState } from 'react'
-import './App.css'
+import Sidebar from "./components/common/Sidebar/Sidebar.tsx"
+import AppLayout from "./components/layout/AppLayout"
+import SessionPage from "./pages/session/SessionPage.tsx"
+import MainContentLayout from "./components/layout/MainContentLayout.tsx"
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
     <>
-
+      <AppLayout>
+        <Sidebar />
+        <MainContentLayout>
+          <SessionPage />
+        </MainContentLayout>
+      </AppLayout>
     </>
   )
 }
