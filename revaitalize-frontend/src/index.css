@@ -33,10 +33,6 @@
 
 @import "tailwindcss";
 
-@plugin "daisyui" {
-	themes: all;
-}
-
 :root {
 	font-family: "Poppins", "sans-serif";
 }
