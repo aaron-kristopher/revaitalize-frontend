@@ -1,12 +1,31 @@
-import { FiActivity } from "react-icons/fi"
+import React from 'react';
 
-function SidebarLogo() {
+import logo from "@/assets/imgs/logo.png"; 
+import exerciseIcon from "@/assets/imgs/exercise.png"; 
+
+interface SidebarLogoProps {
+  open: boolean;
+}
+
+function SidebarLogo({ open }: SidebarLogoProps) {
 	return (
-		<div className="pt-2 pb-8">
-			<FiActivity className="inline pe-2 w-6 h-6 pb-2" />
-			<p className="inline text-2xl font-bold">RevAItalize</p>
+		<div className="flex items-center justify-center h-12 my-2">
+      
+			{open ? (
+        <img 
+          src={logo} 
+          alt="RevItalize" 
+          className="h-10 w-auto" 
+        />
+      ) : (
+        <img 
+          src={exerciseIcon} 
+          alt="RevAItalize-exercise" 
+          className="w-8 h-8" 
+        />
+      )}
 		</div>
 	);
 }
 
-export default SidebarLogo
+export default SidebarLogo;

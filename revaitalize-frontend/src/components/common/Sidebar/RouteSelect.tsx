@@ -1,37 +1,71 @@
-import { FiHome, FiBarChart, FiUser, FiCodepen } from "react-icons/fi";
-import { type IconType } from "react-icons";
+import { NavLink } from 'react-router-dom';
+import { Home, User, BarChart } from 'lucide-react'; 
+import { type LucideIcon } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 
-function RouteSelect() {
-	return (
-		<div className="space-y-2">
-			<Route Icon={FiHome} selected={true} title="Dashboard"></Route>
-			<Route Icon={FiUser} selected={false} title="Profile"></Route>
-			<Route Icon={FiCodepen} selected={false} title="Exercises"></Route>
-			<Route Icon={FiBarChart} selected={false} title="Session"></Route>
-		</div>
-	)
+interface NavItem {
+  to: string;
+  title: string;
+  Icon: LucideIcon;
 }
 
-const Route = ({
-	selected,
-	Icon,
-	title,
-}: {
-	selected: boolean;
-	Icon: IconType;
-	title: string;
-}) => {
+const navItems: NavItem[] = [
+  { to: '/app', title: 'Dashboard', Icon: Home },
+  { to: '/app/profile', title: 'Profile', Icon: User },
+  { to: '/app/session', title: 'Session', Icon: BarChart },
+];
 
-	return <button
-		className={`flex items-center justify-start gap-2 w-full rounded px-2 py-1.5 text-sm transition-[box-shadow_background-color_color]
-		${selected
-				? "bg-base-200 shadow font-semibold"
-				: "hover:bg-base-200 hover:shadow bg-transparent text-bg-constant shadow-none"}
-					`}>
-		<Icon className={selected ? "text-primary base-content" : ""} />
-		<span>{title}</span>
-	</button>
-
+interface RouteSelectProps {
+  open: boolean;
+  currentLocation: string;
 }
 
-export default RouteSelect
+function RouteSelect({ open }: RouteSelectProps) {
+  return (
+    <div className="space-y-2 mt-6">
+      {navItems.map((item) => (
+        <Option
+          key={item.to}
+          to={item.to}
+          Icon={item.Icon}
+          title={item.title}
+          open={open}
+        />
+      ))}
+    </div>
+  );
+}
+
+interface OptionProps {
+  to: string;
+  Icon: LucideIcon;
+  title: string;
+  open: boolean;
+}
+
+const Option = ({ to, Icon, title, open }: OptionProps) => {
+  return (
+    <NavLink to={to} end={to === '/app'}>
+      {({ isActive }) => (
+        <Button
+          variant="ghost"
+          className={`relative flex h-11 items-center rounded-md transition-colors duration-200 ${
+            open ? 'w-full px-4 justify-start' : 'w-full justify-center px-0'
+          } ${
+            isActive
+              ? "text-white"
+              : "text-slate-300 hover:bg-white/5 hover:text-white"
+          }`}
+        >
+          {isActive && (
+            <div className="absolute left-0 top-0 h-full w-1 rounded-r-full bg-[#00A6FB]"></div>
+          )}
+          <Icon className={`h-5 w-5 ${open ? "mr-4" : ""}`} />
+          {open && <span className="text-sm font-semibold">{title}</span>}
+        </Button>
+      )}
+    </NavLink>
+  );
+};
+
+export default RouteSelect;

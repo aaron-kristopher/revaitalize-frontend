@@ -1,4 +1,5 @@
-import React, { type ReactNode } from "react"
+import React, { type ReactNode } from "react";
+import { SidebarProvider } from "@/context/SidebarContext"; 
 
 interface AppLayoutProps {
 	children: ReactNode;
@@ -6,10 +7,12 @@ interface AppLayoutProps {
 
 function AppLayout(props: AppLayoutProps) {
 	return (
-		<div className="bg-primary-content grid gap-4 p-4 grid-cols-[200px_1fr]">
-			{props.children}
-		</div>
-	)
+		<SidebarProvider>
+			<div className="bg-primary-content grid grid-cols-[auto_1fr]">
+				{props.children}
+			</div>
+		</SidebarProvider>
+	);
 }
 
-export default AppLayout
+export default AppLayout;
