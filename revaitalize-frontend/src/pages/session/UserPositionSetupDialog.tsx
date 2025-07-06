@@ -1,28 +1,42 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef } from "react";
 import Webcam from "react-webcam";
-
-import { Dialog, DialogContent, DialogHeader, DialogTitle, } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import type { CalibrationDirection } from "@/hooks/usePositionCalibration";
 import { usePositionCalibration } from "@/hooks/usePositionCalibration";
-import { CheckCircle2, AlertTriangle, X } from 'lucide-react';
+import { CameraIcon, CheckCircleIcon, X, AlertCircleIcon, ArrowLeft, ArrowRight, ArrowUp, ArrowDown } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 interface UserPositionSetupDialogProps {
   isOpen: boolean;
-  onClose(): () => void;
-  onReady(): () => void;
+  onClose: () => void; // Corrected prop type
+  onReady: () => void; // Corrected prop type
 }
 
-function UserPositionSetupDialog({ isOpen, onClose, onReady }: UserPositionSetupDialogProps) {
+// A new helper component for the directional arrow
+const DirectionIndicator = ({ direction }: { direction: CalibrationDirection }) => {
+  if (!direction) return null;
+  const Arrow = {
+    left: ArrowLeft,
+    right: ArrowRight,
+    up: ArrowUp,
+    down: ArrowDown,
+    forward: ArrowUp, // Use up arrow for "forward"
+    back: ArrowDown,  // Use down arrow for "back"
+  }[direction];
+
+  return <Arrow size={48} className="text-yellow-400" />;
+};
+
+
+export function UserPositionSetupDialog({ isOpen, onClose, onReady }: UserPositionSetupDialogProps) {
   const dialogWebcamRef = useRef<Webcam | null>(null);
 
-  const { isPositioned, calibrationStatus, countdown } = usePositionCalibration(dialogWebcamRef, isOpen);
+  const { isPositioned, calibrationStatus, countdown, direction } = usePositionCalibration(dialogWebcamRef, isOpen);
 
   useEffect(() => {
     if (countdown === 0) {
-      setTimeout(() => {
-        onReady();
-      }, 500);
+      setTimeout(() => { onReady(); }, 500);
     }
   }, [countdown, onReady]);
 
@@ -30,7 +44,7 @@ function UserPositionSetupDialog({ isOpen, onClose, onReady }: UserPositionSetup
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent showCloseButton={false} className="h-3/4 min-w-3/4 p-0 gap-0 overflow-hidden">
+      <DialogContent showCloseButton={false} className="h-3/4 min-w-[85%] p-0 gap-0 overflow-hidden border-none shadow-2xl">
         <DialogHeader className="p-4 border-b flex flex-row justify-between items-center">
           <DialogTitle className="text-xl font-semibold">Let's Get Setup First!</DialogTitle>
           <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close" className="h-8 w-8 rounded-full">
@@ -39,10 +53,51 @@ function UserPositionSetupDialog({ isOpen, onClose, onReady }: UserPositionSetup
         </DialogHeader>
 
         <div className="flex flex-col md:flex-row">
-          {/* Left Column: Instructions */}
-          <div className="p-6 md:w-1/2 flex flex-col">
+
+          {/* Right Column: Video Feed with Overlays */}
+          <div className="md:w-1/2 bg-slate-900 relative min-h-[320px] flex items-center justify-center">
+            <Webcam
+              ref={dialogWebcamRef}
+              className="w-full h-full object-cover"
+              mirrored={true}
+              videoConstraints={{ facingMode: 'user' }}
+            />
+
+            {/* Overlay Container */}
+            <div className="absolute inset-0 pointer-events-none">
+              {/* Silhouette guide */}
+              {!isPositioned && (
+                <div className="h-full w-full flex items-center justify-center">
+                  <div className="border-2 border-dashed border-white/50 rounded-lg h-5/6 w-7/12" />
+                </div>
+              )}
+
+              {/* Large directional indicator */}
+              {direction && !isPositioned && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="bg-black/40 rounded-full p-4 md:p-6 animate-pulse">
+                    <DirectionIndicator direction={direction} />
+                  </div>
+                </div>
+              )}
+
+              {/* Status Badge at the top */}
+              <div className="absolute top-4 left-0 right-0 flex justify-center">
+                {isPositioned && (
+                  <div className="bg-green-500 text-white px-4 py-2 rounded-full text-base font-medium animate-pulse flex items-center shadow-lg">
+                    <CheckCircleIcon size={18} className="mr-2" />
+                    <span>Good Position</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+
+          <div className="p-6 md:w-1/2 flex flex-col bg-white">
             <p className="text-slate-700 mb-4">
-              To get started, position yourself correctly in front of the camera. The session will begin automatically after the countdown.
+              To get started, position yourself correctly. The session will begin automatically
+              {isPositioned ? ` in ${countdown} seconds` : ''} after you're aligned.
             </p>
             <ul className="space-y-2 mb-6 text-slate-600">
               <li className="flex items-start"><span className="mr-2 mt-1 text-blue-500">•</span><span>Stand far enough that your upper body is visible.</span></li>
@@ -50,50 +105,34 @@ function UserPositionSetupDialog({ isOpen, onClose, onReady }: UserPositionSetup
               <li className="flex items-start"><span className="mr-2 mt-1 text-blue-500">•</span><span>Center yourself in the frame.</span></li>
             </ul>
 
-            <div className="mt-auto">
+            <div className="mt-auto space-y-4">
               <div className={cn(
-                "p-4 rounded-lg border",
-                feedbackType === 'success' && 'bg-green-50 border-green-200',
-                feedbackType === 'warning' && 'bg-yellow-50 border-yellow-200',
+                "p-4 rounded-lg border-2 flex items-center",
+                feedbackType === 'success' && 'bg-green-50 border-green-300',
+                feedbackType === 'warning' && 'bg-yellow-50 border-yellow-300',
               )}>
-                <div className="flex items-center">
-                  {isPositioned ?
-                    <CheckCircle2 className="mr-2 text-green-500" size={20} /> :
-                    <AlertTriangle className="mr-2 text-yellow-500" size={20} />
-                  }
-                  <p className={cn(
-                    "text-2xl font-medium",
-                    feedbackType === 'success' && 'text-green-700',
-                    feedbackType === 'warning' && 'text-yellow-700',
-                  )}>
-                    {calibrationStatus}
-                  </p>
-                </div>
+                {isPositioned ?
+                  <CheckCircleIcon className="mr-3 text-green-500 h-6 w-6 flex-shrink-0" /> :
+                  <AlertCircleIcon className="mr-3 text-yellow-500 h-6 w-6 flex-shrink-0" />
+                }
+                <p className={cn(
+                  "font-medium text-lg",
+                  feedbackType === 'success' && 'text-green-700',
+                  feedbackType === 'warning' && 'text-yellow-700',
+                )}>
+                  {calibrationStatus}
+                </p>
               </div>
 
               {isPositioned && countdown !== null && countdown > 0 && (
-                <div className="text-center mt-4">
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold text-xl animate-ping-once">
+                <div className="text-center">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600 font-bold text-2xl animate-ping-once">
                     {countdown}
                   </div>
+                  <p className="text-sm text-slate-500 mt-2">Starting session...</p>
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Right Column: Video Feed */}
-          <div className="md:w-1/2 bg-slate-900 relative min-h-[320px]">
-            <Webcam
-              ref={dialogWebcamRef}
-              className="w-full h-full object-cover"
-              mirrored={true}
-              videoConstraints={{ facingMode: 'user' }}
-            />
-            {isPositioned && (
-              <div className="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium animate-pulse">
-                Good Position
-              </div>
-            )}
           </div>
         </div>
       </DialogContent>
@@ -101,4 +140,4 @@ function UserPositionSetupDialog({ isOpen, onClose, onReady }: UserPositionSetup
   );
 }
 
-export default UserPositionSetupDialog
+export default UserPositionSetupDialog;

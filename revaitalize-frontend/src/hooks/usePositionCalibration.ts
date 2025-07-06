@@ -2,14 +2,23 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import { usePoseLandmarker } from "./usePoseLandmarker";
 import Webcam from "react-webcam";
 
+export type CalibrationDirection = 'left' | 'right' | 'up' | 'down' | 'forward' | 'back' | null;
 
-export const usePositionCalibration = (webcamRef: React.RefObject<Webcam | null>, isChecking: boolean) => {
+export interface CalibrationResult {
+  isPositioned: boolean;
+  calibrationStatus: string;
+  countdown: number | null;
+  direction: CalibrationDirection;
+}
+
+export const usePositionCalibration = (webcamRef: React.RefObject<Webcam | null>, isChecking: boolean): CalibrationResult => {
 
   const { poseLandmarker, landmarkerStatus } = usePoseLandmarker();
 
   const [isPositioned, setIsPositioned] = useState<boolean>(false);
   const [calibrationStatus, setCalibrationStatus] = useState<string>("Initializing...")
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [direction, setDirection] = useState<CalibrationDirection>(null);
 
   const lastTimestampRef = useRef<number>(-1);
   const animationFrameIdRef = useRef<number | null>(null);
@@ -59,31 +68,38 @@ export const usePositionCalibration = (webcamRef: React.RefObject<Webcam | null>
       const landmarks = result.landmarks[0];
       const leftHip = landmarks[23];
       const rightHip = landmarks[24];
-      const avgX = (leftHip.x + rightHip.x) / 2
-      const avgZ = Math.max(leftHip.z, rightHip.z)
+      const avgX: number = (leftHip.x + rightHip.x) / 2
+      const avgZ: number = Math.max(leftHip.z, rightHip.z);
 
       console.log(avgZ);
 
-      let statusMessage = "";
-      let inPosition = false;
+      let statusMessage: string = "";
+      let inPosition: boolean = false;
+      let dir: CalibrationDirection = null;
 
       if (leftHip.y < MIN_HIP_Y || rightHip.y < MIN_HIP_Y) {
         statusMessage = "Please place yourself higher in the frame.";
+        dir = "up";
       }
       else if (leftHip.y > MAX_HIP_Y || rightHip.y > MAX_HIP_Y) {
         statusMessage = "Please place yourself lower in the frame.";
+        dir = "down";
       }
       else if (avgZ < MIN_HIP_Z) {
         statusMessage = "Please move a little bit closer.";
+        dir = "forward";
       }
       else if (avgZ > MAX_HIP_Z) {
         statusMessage = "Please move a tiny step back.";
+        dir = "back";
       }
       else if (avgX < MIN_HIP_X) {
         statusMessage = "Please move a little bit to the left.";
+        dir = "left";
       }
       else if (avgX > MAX_HIP_X) {
         statusMessage = "Please move a little bit to the right.";
+        dir = "right";
       }
       else {
         statusMessage = "Position Correct! Hold still...";
@@ -92,13 +108,11 @@ export const usePositionCalibration = (webcamRef: React.RefObject<Webcam | null>
 
       setCalibrationStatus(statusMessage);
       setIsPositioned(inPosition);
+      setDirection(dir);
 
       console.log(calibrationStatus)
-      if (inPosition && countdown === 0) {
-        if (animationFrameIdRef.current) {
-          cancelAnimationFrame(animationFrameIdRef.current);
-          return;
-        }
+      if (inPosition) {
+        return;
       }
     } else {
       setCalibrationStatus("No Person Detected")
@@ -145,5 +159,5 @@ export const usePositionCalibration = (webcamRef: React.RefObject<Webcam | null>
 
   }, [isChecking, landmarkerStatus, checkLoop]);
 
-  return { isPositioned, calibrationStatus, countdown };
+  return { isPositioned, calibrationStatus, countdown, direction };
 }
