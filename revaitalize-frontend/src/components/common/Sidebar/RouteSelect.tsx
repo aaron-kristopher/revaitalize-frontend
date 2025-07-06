@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Home, User, BarChart } from 'lucide-react'; 
+import { Home, User, BarChart } from 'lucide-react';
 import { type LucideIcon } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
@@ -49,16 +49,14 @@ const Option = ({ to, Icon, title, open }: OptionProps) => {
       {({ isActive }) => (
         <Button
           variant="ghost"
-          className={`relative flex h-11 items-center rounded-md transition-colors duration-200 ${
-            open ? 'w-full px-4 justify-start' : 'w-full justify-center px-0'
-          } ${
-            isActive
-              ? "text-white"
-              : "text-slate-300 hover:bg-white/5 hover:text-white"
-          }`}
+          className={`my-1 relative flex h-11 items-center rounded-md transition-colors duration-200 hover:bg-white/5 hover:text-white ${open ? 'w-full px-4 justify-start' : 'w-full justify-center px-0'
+            } ${isActive
+              ? "text-white bg-white/5"
+              : "text-slate-300"
+            }`}
         >
           {isActive && (
-            <div className="absolute left-0 top-0 h-full w-1 rounded-r-full bg-[#00A6FB]"></div>
+            <div className="absolute left-0 top-2 h-[65%] w-1 rounded-r-full bg-[#0096C7]"></div>
           )}
           <Icon className={`h-5 w-5 ${open ? "mr-4" : ""}`} />
           {open && <span className="text-sm font-semibold">{title}</span>}

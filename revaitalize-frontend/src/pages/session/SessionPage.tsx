@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
-import { PoseLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import Webcam from "react-webcam";
 import { usePoseSequence } from "../../hooks/usePoseSequence";
+import { usePoseLandmarker } from "../../hooks/usePoseLandmarker.ts"
+import UserPositionSetupDialog from './UserPositionSetupDialog.tsx';
 
-// --- UI Imports ---
+
 import { useSidebar } from "@/context/SidebarContext";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -44,40 +45,18 @@ function SessionPage() {
   const webcamRef = useRef<Webcam>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const lastTimestampRef = useRef<number>(-1);
-  const poseLandmarkerRef = useRef<PoseLandmarker | null>(null);
   const animationFrameIdRef = useRef<number | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const oheExerciseRef = useRef<number[]>([0.0, 1.0, 0.0]);
 
   const { latestPrediction, processFrame, status } = usePoseSequence();
-
-  const createPoseLandmarker = useCallback(async () => {
-    try {
-      console.log("Creating PoseLandmarker...");
-      const vision = await FilesetResolver.forVisionTasks("/wasm");
-      const landmarker = await PoseLandmarker.createFromOptions(vision, {
-        baseOptions: {
-          modelAssetPath: "/models/pose_landmarker_full.task",
-          delegate: "GPU"
-        },
-        runningMode: "VIDEO",
-        numPoses: 1,
-      });
-
-      poseLandmarkerRef.current = landmarker;
-      console.log("PoseLandmarker Created Successfully.");
-
-    } catch (error) {
-      console.error("Failed to create PoseLandmarker!", error);
-    }
-  }, []);
+  const { poseLandmarker, landmarkerStatus } = usePoseLandmarker();
 
   const detect = useCallback(() => {
-    const poseLandmarker = poseLandmarkerRef.current;
     const webcam = webcamRef.current;
     const canvas = canvasRef.current;
 
-    if (!poseLandmarker || !webcam || !canvas || typeof webcam.video === "undefined" || webcam.video.readyState !== 4) {
+    if (!poseLandmarker || !webcam || !canvas || typeof webcam.video === "undefined" || webcam.video?.readyState !== 4) {
       return;
     }
     const video = webcam.video as HTMLVideoElement;
@@ -139,6 +118,7 @@ function SessionPage() {
           ctx.lineWidth = 4; ctx.strokeStyle = color; ctx.stroke();
         }
       }
+
       for (const index of UPPER_BODY_INDICES) {
         const landmark = allLandmarks[index];
         if (landmark) {
@@ -149,39 +129,43 @@ function SessionPage() {
           ctx.fillStyle = color; ctx.fill();
         }
       }
+    } else {
+      console.log("No results")
     }
-  }, [processFrame, latestPrediction]);
+  }, [processFrame, poseLandmarker, latestPrediction]);
 
   useEffect(() => {
     const runAnimation = () => {
-      if (!isProcessing) { if (animationFrameIdRef.current) { cancelAnimationFrame(animationFrameIdRef.current); } return; }
+      if (!isProcessing) {
+        if (animationFrameIdRef.current) {
+          cancelAnimationFrame(animationFrameIdRef.current);
+        } return;
+      }
       detect();
       animationFrameIdRef.current = requestAnimationFrame(runAnimation);
     };
-    if (isProcessing) { animationFrameIdRef.current = requestAnimationFrame(runAnimation); }
-    else { if (animationFrameIdRef.current) { cancelAnimationFrame(animationFrameIdRef.current); } }
-    return () => { if (animationFrameIdRef.current) { cancelAnimationFrame(animationFrameIdRef.current); } };
+    if (isProcessing) {
+      animationFrameIdRef.current = requestAnimationFrame(runAnimation);
+    } else {
+      if (animationFrameIdRef.current) {
+        cancelAnimationFrame(animationFrameIdRef.current);
+      }
+    }
+    return () => {
+      if (animationFrameIdRef.current) {
+        cancelAnimationFrame(animationFrameIdRef.current);
+      }
+    };
   }, [isProcessing, detect]);
 
   useEffect(() => {
-    console.log("PoseDetection useEffect: Initializing MediaPipe...");
-    createPoseLandmarker();
-
     return () => {
-
-      console.log("PoseDetection useEffect: Cleaning up...");
       if (animationFrameIdRef.current) {
         cancelAnimationFrame(animationFrameIdRef.current);
         animationFrameIdRef.current = null;
       }
-
-      if (poseLandmarkerRef.current) {
-        console.log("Closing PoseLandmarker from Detection");
-        poseLandmarkerRef.current.close();
-        poseLandmarkerRef.current = null;
-      }
     };
-  }, [createPoseLandmarker]);
+  }, []);
 
   const handleTogglePlay = () => {
     if (sessionState === 'idle') {
@@ -216,9 +200,12 @@ function SessionPage() {
   useEffect(() => {
     if (!isProcessing) return;
     if (latestPrediction) {
-      if (latestPrediction.includes(1)) { setFeedback({ status: 'incorrect', text: 'Adjust Your Form' }); }
+      if (latestPrediction.includes(1)) {
+        setFeedback({ status: 'incorrect', text: 'Adjust Your Form' });
+      }
       else { setFeedback({ status: 'correct', text: 'Excellent Form!' }); setAccuracy(prev => Math.min(prev + 0.1, 98)); }
     }
+    console.log(latestPrediction);
   }, [latestPrediction, isProcessing]);
 
   // --- JSX & Dynamic Styles ---
@@ -238,6 +225,8 @@ function SessionPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-100 text-slate-900">
+
+      <UserPositionSetupDialog />
       <header className="flex-shrink-0 bg-white border-b border-slate-200 px-4 lg:px-6 py-3 lg:py-4 z-10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">

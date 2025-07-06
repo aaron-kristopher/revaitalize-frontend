@@ -28,7 +28,7 @@ function AccountToggle({ open, currentLocation }: AccountToggleProps) {
             </CardContent>
           </Card>
         )}
-        
+
         <div className={`flex items-center p-3 rounded-lg gap-3 bg-black/10`}>
           <div className="w-9 h-9 bg-sky-300/20 rounded-md flex items-center justify-center flex-shrink-0">
             <span className="text-sky-300 text-sm font-bold">AL</span>
@@ -46,14 +46,14 @@ function AccountToggle({ open, currentLocation }: AccountToggleProps) {
   return (
     <div className="flex flex-col items-center space-y-2">
       {!isTestActive && (
-        <Link to="/app/session">hover
-          <Button variant="ghost" className="relative w-10 h-10 flex items-center justify-center rounded-lg text-slate-300 :bg-white/5 hover:text-white">
+        <Link to="/app/session">
+          <Button variant="ghost" className="relative w-10 h-10 flex items-center justify-center rounded-lg text-slate-300 hover:bg-[#0077B6] hover:text-white">
             <Dumbbell className="w-5 h-5" />
           </Button>
         </Link>
       )}
-      
-      <Button variant="ghost" className="w-10 h-10 p-0 flex items-center justify-center rounded-full bg-sky-300/20 hover:bg-sky-300/30 text-sky-200">
+
+      <Button variant="ghost" className="w-10 h-10 p-0 flex items-center justify-center rounded-full bg-sky-300/20 hover:bg-[#0077B6] text-sky-200">
         <span className="text-sm font-bold">AL</span>
       </Button>
     </div>
