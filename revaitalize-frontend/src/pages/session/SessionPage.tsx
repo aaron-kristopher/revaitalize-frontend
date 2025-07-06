@@ -35,12 +35,13 @@ const UPPER_BODY_INDICES = [0, 2, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 23, 24
 type FeedbackStatus = 'waiting' | 'correct' | 'incorrect';
 
 function SessionPage() {
-  const { setSidebarOpen } = useSidebar();
+
   const [sessionState, setSessionState] = useState<'idle' | 'running' | 'paused'>('idle');
   const [feedback, setFeedback] = useState<{ status: FeedbackStatus; text: string }>({ status: 'waiting', text: 'Press Play to Begin' });
   const [currentReps, setCurrentReps] = useState(0);
   const [currentSet, setCurrentSet] = useState(1);
   const [accuracy, setAccuracy] = useState(0);
+  const [isSetUpDialogOpen, setIsSetUpDialogOpen] = useState<boolean>(true);
 
   const webcamRef = useRef<Webcam>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -49,6 +50,7 @@ function SessionPage() {
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const oheExerciseRef = useRef<number[]>([0.0, 1.0, 0.0]);
 
+  const { setSidebarOpen } = useSidebar();
   const { latestPrediction, processFrame, status } = usePoseSequence();
   const { poseLandmarker, landmarkerStatus } = usePoseLandmarker();
 
@@ -196,6 +198,19 @@ function SessionPage() {
     }
   };
 
+  const handleReady = () => {
+    setIsSetUpDialogOpen(false);
+
+    // TODO: Finish what to do when the user is ready
+    // TODO: run toggle play or something
+
+    if (sessionState === "idle") {
+      setSessionState('running');
+      setIsProcessing(true);
+    }
+
+  }
+
   // --- INTEGRATION: Update UI based on prediction ---
   useEffect(() => {
     if (!isProcessing) return;
@@ -226,7 +241,7 @@ function SessionPage() {
   return (
     <div className="flex flex-col min-h-screen bg-slate-100 text-slate-900">
 
-      <UserPositionSetupDialog />
+      <UserPositionSetupDialog isOpen={isSetUpDialogOpen} onClose={() => { setIsSetUpDialogOpen(false) }} onReady={handleReady} />
       <header className="flex-shrink-0 bg-white border-b border-slate-200 px-4 lg:px-6 py-3 lg:py-4 z-10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">

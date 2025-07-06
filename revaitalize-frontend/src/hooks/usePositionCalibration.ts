@@ -3,34 +3,39 @@ import { usePoseLandmarker } from "./usePoseLandmarker";
 import Webcam from "react-webcam";
 
 
-export const usePositionCalibration = (webcamRef: React.RefObject<Webcam | null>) => {
+export const usePositionCalibration = (webcamRef: React.RefObject<Webcam | null>, isChecking: boolean) => {
 
   const { poseLandmarker, landmarkerStatus } = usePoseLandmarker();
 
-  const [isNotInPosition, setIsNotInPosition] = useState<boolean>(true);
-  const [calibrationStatus, setCalibrationStatus] = useState<string>("Please be at least 1 meter from the camera.")
+  const [isPositioned, setIsPositioned] = useState<boolean>(false);
+  const [calibrationStatus, setCalibrationStatus] = useState<string>("Initializing...")
+  const [countdown, setCountdown] = useState<number | null>(null);
 
   const lastTimestampRef = useRef<number>(-1);
   const animationFrameIdRef = useRef<number | null>(null);
+  const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
 
 
   const MIN_HIP_Y = 0.4;
   const MAX_HIP_Y = 0.8;
 
   const MIN_HIP_Z = 0.0003;
-  const MAX_HIP_Z = 0.0007;
+  const MAX_HIP_Z = 0.005;
+
+  const MIN_HIP_X = 0.542;
+  const MAX_HIP_X = 0.582;
 
   const checkLoop = useCallback(() => {
 
     if (!webcamRef.current?.video || landmarkerStatus !== "ready" || !poseLandmarker) {
-      console.log("Still setting up");
+      setCalibrationStatus("Setting up Camera.")
       animationFrameIdRef.current = requestAnimationFrame(checkLoop);
       return;
     }
 
     const video = webcamRef.current?.video as HTMLVideoElement;
     if (video?.readyState !== 4) {
-      console.log("Webcam is not ready");
+      setCalibrationStatus("Webcam is not ready");
       animationFrameIdRef.current = requestAnimationFrame(checkLoop);
       return;
     }
@@ -54,6 +59,10 @@ export const usePositionCalibration = (webcamRef: React.RefObject<Webcam | null>
       const landmarks = result.landmarks[0];
       const leftHip = landmarks[23];
       const rightHip = landmarks[24];
+      const avgX = (leftHip.x + rightHip.x) / 2
+      const avgZ = Math.max(leftHip.z, rightHip.z)
+
+      console.log(avgZ);
 
       let statusMessage = "";
       let inPosition = false;
@@ -64,11 +73,17 @@ export const usePositionCalibration = (webcamRef: React.RefObject<Webcam | null>
       else if (leftHip.y > MAX_HIP_Y || rightHip.y > MAX_HIP_Y) {
         statusMessage = "Please place yourself lower in the frame.";
       }
-      else if (rightHip.z < MIN_HIP_Z) {
+      else if (avgZ < MIN_HIP_Z) {
         statusMessage = "Please move a little bit closer.";
       }
-      else if (rightHip.z > MAX_HIP_Z) {
+      else if (avgZ > MAX_HIP_Z) {
         statusMessage = "Please move a tiny step back.";
+      }
+      else if (avgX < MIN_HIP_X) {
+        statusMessage = "Please move a little bit to the left.";
+      }
+      else if (avgX > MAX_HIP_X) {
+        statusMessage = "Please move a little bit to the right.";
       }
       else {
         statusMessage = "Position Correct! Hold still...";
@@ -76,10 +91,10 @@ export const usePositionCalibration = (webcamRef: React.RefObject<Webcam | null>
       }
 
       setCalibrationStatus(statusMessage);
-      setIsNotInPosition(!inPosition);
+      setIsPositioned(inPosition);
 
       console.log(calibrationStatus)
-      if (inPosition) {
+      if (inPosition && countdown === 0) {
         if (animationFrameIdRef.current) {
           cancelAnimationFrame(animationFrameIdRef.current);
           return;
@@ -90,11 +105,33 @@ export const usePositionCalibration = (webcamRef: React.RefObject<Webcam | null>
     }
 
     animationFrameIdRef.current = requestAnimationFrame(checkLoop);
-  }, [isNotInPosition, landmarkerStatus, poseLandmarker, webcamRef])
+
+  }, [isPositioned, landmarkerStatus, poseLandmarker, webcamRef])
 
   useEffect(() => {
 
-    if (landmarkerStatus === "ready" && isNotInPosition) {
+    if (isPositioned && !countdown) {
+      setCountdown(5);
+
+      countdownTimerRef.current = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev === null || prev <= 1) {
+            clearInterval(countdownTimerRef.current!);
+            return 0;
+          } else {
+            return --prev
+          }
+        })
+      }, 1000);
+    } else if (!isPositioned && countdown) {
+      clearInterval(countdownTimerRef.current!);
+      setCountdown(null);
+    }
+  }, [isPositioned]);
+
+  useEffect(() => {
+
+    if (landmarkerStatus === "ready" && isChecking) {
       animationFrameIdRef.current = requestAnimationFrame(checkLoop);
     }
 
@@ -106,6 +143,7 @@ export const usePositionCalibration = (webcamRef: React.RefObject<Webcam | null>
       }
     }
 
-  }, [landmarkerStatus, isNotInPosition, checkLoop]);
-  return { isNotInPosition, calibrationStatus };
+  }, [isChecking, landmarkerStatus, checkLoop]);
+
+  return { isPositioned, calibrationStatus, countdown };
 }
