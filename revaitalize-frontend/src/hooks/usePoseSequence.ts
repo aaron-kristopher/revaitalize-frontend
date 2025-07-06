@@ -53,7 +53,7 @@ export const usePoseSequence = () => {
     isReadyToPredict.current = false;
 
     try {
-      const url = "http://127.0.0.1:8000/api/predict/";
+      const url = "http://127.0.0.1:8001/api/predict/";
       const response = await fetch(url, {
         method: "POST",
         headers: {
