@@ -4,14 +4,17 @@ import onboardingLogo from "@/assets/imgs/onboarding-logo.png";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { CheckCircle2 } from "lucide-react";
 
-// Assuming BackgroundOrbs is in this location and correctly typed
+import { Slider } from "@/components/ui/slider";
 import OnboardingOrbs from '@/components/common/OnboardingOrbs';
 
 // --- Type Definitions for our data and props ---
 
 interface OnboardingQuestion {
     question: string;
-    options: string[];
+    type: 'options' | 'slider';
+    options?: string[];
+    min?: number;
+    max?: number;
 }
 
 interface OptionCardProps {
@@ -20,20 +23,107 @@ interface OptionCardProps {
     onSelect: () => void;
 }
 
+const AuroraStyles = React.memo(() => (
+  <style>
+    {`
+      @keyframes aurora {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+      .animate-aurora {
+        background-size: 200% 200%;
+        animation: aurora 4s ease infinite;
+      }
+    `}
+  </style>
+));
+
+interface TooltipSliderProps {
+    value: number;
+    min: number;
+    max: number;
+    onChange: (value: number) => void;
+}
+
+const TooltipSlider: React.FC<TooltipSliderProps> = ({ value, min, max, onChange }) => {
+    const [isInteracting, setIsInteracting] = useState(false);
+    
+    const range = max - min;
+    const valuePercent = range > 0 ? ((value - min) / range) * 100 : 0;
+
+    return (
+        <div className="flex w-full flex-col items-center gap-4 pt-4">
+            <div
+                className="relative w-full py-5"
+                onPointerDown={() => setIsInteracting(true)}
+                onPointerUp={() => setIsInteracting(false)}
+                onMouseLeave={() => setIsInteracting(false)} 
+            >
+                <motion.div
+                    className="absolute bottom-full mb-3 flex h-10 w-14 items-center justify-center rounded-lg bg-gradient-to-r from-[#013A63] to-[#0077B6] animate-aurora text-xl font-bold text-white shadow-lg"
+                    style={{
+                        left: `${valuePercent}%`,
+                        x: '-50%', 
+                    }}
+                    initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                    animate={{
+                        opacity: isInteracting ? 1 : 0,
+                        scale: isInteracting ? 1 : 0.8,
+                        y: isInteracting ? 0 : 10,
+                    }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                >
+                    {value}
+                </motion.div>
+
+                <Slider
+                    value={[value]}
+                    min={min}
+                    max={max}
+                    step={1}
+                    onValueChange={(val) => onChange(val[0])}
+                    className="w-full"
+                />
+            </div>
+            <div className="w-full flex justify-between px-1 text-sm font-medium text-slate-500">
+                <span>Low Pain</span>
+                <span>High Pain</span>
+            </div>
+        </div>
+    );
+};
+
+
 // --- Component Data ---
 
 const onboardingQuestions: OnboardingQuestion[] = [
     {
-        question: "How often would you like to engage in rehabilitation exercises?",
-        options: ["Once a day", "3-4 times a week", "1-2 times a week"],
+        question: "What is your main motivation or primary goal in partaking in rehabilitation exercises?",
+        type: 'options',
+        options: ["Reduce Pain", "Improve Mobility", "Increase Flexibility", "Improve Strength"],
     },
     {
-        question: "What is your primary goal with these exercises?",
-        options: ["Reduce chronic pain", "Increase flexibility", "Improve strength"],
+        question: "On a scale of 1 to 10, rate your current back pain level.",
+        type: 'slider',
+        min: 1,
+        max: 10,
     },
     {
-        question: "What time of day do you prefer to exercise?",
-        options: ["In the morning", "During the afternoon", "In the evening"],
+        question: "What movement do you have problems with doing?",
+        type: 'options',
+        options: ["Twisting", "Bending to the Side", "Raising an Arm"],
+    },
+    {
+        question: "What is your preferred exercise frequency within a week?",
+        type: 'options',
+        options: ["2 times a week", "3 times a week", "5 times a week", "7 times a week"],
     },
 ];
 
@@ -80,7 +170,9 @@ const OptionCard: React.FC<OptionCardProps> = ({ text, isSelected, onSelect }) =
 
 const OnboardingPage: React.FC = () => {
     const [currentStep, setCurrentStep] = useState<number>(0);
-    const [answers, setAnswers] = useState<Record<number, string>>({});
+    const [answers, setAnswers] = useState<Record<number, string>>({
+        1: '5',
+    });
     const [isComplete, setIsComplete] = useState<boolean>(false);
 
     const handleNext = (): void => {
@@ -88,8 +180,6 @@ const OnboardingPage: React.FC = () => {
             setCurrentStep((prev) => prev + 1);
         } else {
             setIsComplete(true);
-            // You can add a redirect here after a delay, e.g.,
-            // setTimeout(() => navigate('/app'), 2000);
         }
     };
 
@@ -109,6 +199,7 @@ const OnboardingPage: React.FC = () => {
 
     return (
         <div className="relative min-h-screen bg-[#EAF7FF] p-8 flex flex-col justify-center overflow-hidden">
+            <AuroraStyles />
             <OnboardingOrbs />
 
             <AnimatePresence>
@@ -138,25 +229,38 @@ const OnboardingPage: React.FC = () => {
                                     <motion.p variants={stepVariants} className="text-sm font-bold text-[#0077B6] tracking-wider uppercase mb-2">
                                         Step {currentStep + 1} / {onboardingQuestions.length}
                                     </motion.p>
-                                    <motion.h1 variants={stepVariants} className="text-3xl font-bold text-[#013A63] mb-10">
+                                    <motion.h1 variants={stepVariants} className="text-3xl font-bold text-[#013A63] mb-6">
                                         {currentQuestionData.question}
                                     </motion.h1>
-                                    <motion.div variants={stepVariants} className="space-y-3">
-                                        {currentQuestionData.options.map((option) => (
-                                            <OptionCard
-                                                key={option}
-                                                text={option}
-                                                isSelected={answers[currentStep] === option}
-                                                onSelect={() => handleAnswerSelect(option)}
+                                    
+                                    {currentQuestionData.type === 'slider' ? (
+                                        <motion.div variants={stepVariants}>
+                                            <TooltipSlider
+                                                value={Number(answers[currentStep])}
+                                                min={currentQuestionData.min!}
+                                                max={currentQuestionData.max!}
+                                                onChange={(value) => handleAnswerSelect(String(value))}
                                             />
-                                        ))}
-                                    </motion.div>
+                                        </motion.div>
+                                    ) : (
+                                        <motion.div variants={stepVariants} className="space-y-3">
+                                            {currentQuestionData.options?.map((option) => (
+                                                <OptionCard
+                                                    key={option}
+                                                    text={option}
+                                                    isSelected={answers[currentStep] === option}
+                                                    onSelect={() => handleAnswerSelect(option)}
+                                                />
+                                            ))}
+                                        </motion.div>
+                                    )}
+
                                 </motion.div>
                             </AnimatePresence>
                         </main>
 
                         <footer className="w-full max-w-xl mx-auto flex flex-col items-center mt-12 z-10">
-                            <div className="w-full bg-gray-200/80 rounded-full h-2 mb-5">
+                            <div className="w-full bg-slate-200 rounded-full h-2 mb-5">
                                 <motion.div
                                     className="bg-[#0077B6] h-2 rounded-full"
                                     animate={{ width: `${progress}%` }}
@@ -168,7 +272,7 @@ const OnboardingPage: React.FC = () => {
                                     <Button
                                         onClick={handlePrev}
                                         disabled={currentStep === 0}
-                                        className="bg-white border-2 border-gray-300 text-[#0077B6] hover:bg-sky-100 hover:border-sky-200 rounded-full px-10 py-4 text-base font-semibold disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200"
+                                        className="bg-white border-2 border-slate-300 text-[#0077B6] hover:bg-sky-100 hover:border-sky-200 rounded-full px-10 py-4 text-base font-semibold disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200"
                                     >
                                         Previous
                                     </Button>
@@ -177,7 +281,7 @@ const OnboardingPage: React.FC = () => {
                                     <Button
                                         onClick={handleNext}
                                         disabled={!answers[currentStep]}
-                                        className="bg-[#0077B6] hover:bg-blue-600 text-white rounded-full px-10 py-4 text-base font-semibold disabled:bg-gray-300"
+                                        className="bg-[#0077B6] hover:bg-blue-600 text-white rounded-full px-10 py-4 text-base font-semibold disabled:bg-slate-300"
                                     >
                                         {isLastStep ? 'Finish' : 'Next'}
                                     </Button>
