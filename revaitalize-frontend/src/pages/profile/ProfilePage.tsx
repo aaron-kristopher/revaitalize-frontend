@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useSidebar } from '@/context/SidebarContext';
 import { Button } from "@/components/ui/button";
@@ -11,19 +11,74 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/co
 import { User, Shield, Bell, Camera, Loader2, Check } from 'lucide-react';
 import sidebarLogo from "@/assets/imgs/sidebar.png";
 import profileImage from "@/assets/imgs/aprilhymn.jpg";
+import { useAuth } from '@/context/AuthContext'; // Import our auth hook
+import { updateUser, type UserUpdatePayload } from '@/api/userService'; // Import update function
+import { LogOut } from 'lucide-react';
 
 const ProfilePage: React.FC = () => {
     const { setSidebarOpen } = useSidebar();
+    const { user, login, logout } = useAuth(); 
+
+    // State to manage the form inputs
+    const [formData, setFormData] = useState<UserUpdatePayload>({
+        first_name: '',
+        last_name: '',
+        email: '',
+        age: 0,       // <-- ADD THIS
+        address: '',
+    });
+
+    const [error, setError] = useState<string | null>(null);
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { id, value } = e.target;
+        setFormData(prev => ({ ...prev, [id]: value }));
+    };
+
+    useEffect(() => {
+        if (user) {
+            setFormData({
+                first_name: user.first_name,
+                last_name: user.last_name,
+                email: user.email,
+                age: user.age,
+                address: user.address,
+            });
+        }
+    }, [user]);
+
     const [isSaving, setIsSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
-    const handleSaveChanges = () => {
+    const handleSaveChanges = async () => {
+        if (!user) return;
+
         setIsSaving(true);
         setSaveSuccess(false);
-        setTimeout(() => {
-            setIsSaving(false);
+        setError(null);
+
+        try {
+            // Prepare the payload, converting age back to a number
+            const payload: UserUpdatePayload = {
+                ...formData,
+                age: formData.age ? Number(formData.age) : undefined,
+            };
+
+            const updatedUser = await updateUser(user.id, payload);
+
+            // IMPORTANT: We update the global user state in AuthContext
+            // with the new user details returned from the API.
+            // We need the token to do this, let's assume it's in localStorage for now.
+            const token = localStorage.getItem('accessToken');
+            if (token) {
+                login(updatedUser, token);
+            }
+            
             setSaveSuccess(true);
-            setTimeout(() => setSaveSuccess(false), 2000); 
-        }, 1500);
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setIsSaving(false);
+            setTimeout(() => setSaveSuccess(false), 2000);
+        }
     };
 
     const pageVariants = {
@@ -37,6 +92,10 @@ const ProfilePage: React.FC = () => {
             {/* --- Standard Header --- */}
             <header className="sticky top-0 bg-white border-b border-slate-200 px-4 md:px-6 py-4 z-10">
                 <div className="flex items-center justify-between">
+                    <Button variant="ghost" onClick={logout} className="text-red-600 hover:bg-red-100 hover:text-red-700">
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Logout
+                    </Button>
                     <div className="flex items-center gap-3">
                         <Button variant="ghost" size="icon" onClick={() => setSidebarOpen((prev) => !prev)} className="hover:bg-slate-100 hidden md:inline-flex">
                             <img src={sidebarLogo} alt="Menu Icon" className="w-6 h-6" />
@@ -74,8 +133,8 @@ const ProfilePage: React.FC = () => {
                         </div>
                     </motion.div>
                     <div>
-                        <h1 className="text-3xl font-bold text-slate-800">April Hymn</h1>
-                        <p className="text-slate-500">aprilhymn452@gmail.com</p>
+                        <h1 className="text-3xl font-bold text-slate-800">{user ? `${user.first_name} ${user.last_name}` : 'Loading...'}</h1>
+                        <p className="text-slate-500">{user ? user.email : '...'}</p>
                     </div>
                 </div>
 
@@ -95,20 +154,25 @@ const ProfilePage: React.FC = () => {
                                 </CardHeader>
                                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <Label htmlFor="firstName">First Name</Label>
-                                        <Input id="firstName" defaultValue="April Hymn" />
+                                        <Label htmlFor="first_name">First Name</Label>
+                                        <Input id="first_name" value={formData.first_name} onChange={handleInputChange} />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="lastName">Last Name</Label>
-                                        <Input id="lastName" defaultValue="Dela Cruz" />
+                                        <Label htmlFor="last_name">Last Name</Label>
+                                        <Input id="last_name" value={formData.last_name} onChange={handleInputChange} />
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="email">Email</Label>
-                                        <Input id="email" type="email" defaultValue="aprilhymn452@gmail.com" />
+                                        <Input id="email" type="email" value={formData.email} onChange={handleInputChange} />
                                     </div>
+                                    {/* You'll need to add inputs for Age and Address as well to make them editable */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="phone">Contact Number</Label>
-                                        <Input id="phone" defaultValue="+639213375101" />
+                                        <Label htmlFor="age">Age</Label>
+                                        <Input id="age" type="number" value={formData.age} onChange={handleInputChange} />
+                                    </div>
+                                    <div className="space-y-2 md:col-span-2">
+                                        <Label htmlFor="address">Address</Label>
+                                        <Input id="address" value={formData.address} onChange={handleInputChange} />
                                     </div>
                                 </CardContent>
                                 <CardFooter>
@@ -148,6 +212,7 @@ const ProfilePage: React.FC = () => {
                                     </div>
                                 </CardContent>
                                 <CardFooter>
+                                    {error && <p className="text-sm font-medium text-red-500 mr-4">{error}</p>}
                                     <Button>Update Password</Button>
                                 </CardFooter>
                             </Card>

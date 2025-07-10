@@ -6,6 +6,15 @@ import { CheckCircle2 } from "lucide-react";
 
 import { Slider } from "@/components/ui/slider";
 import OnboardingOrbs from '@/components/common/OnboardingOrbs';
+import { useParams, useNavigate } from 'react-router-dom';
+import { 
+    createUserOnboarding, 
+    createUserProblem, 
+    type OnboardingCreatePayload, 
+    type UserProblemCreatePayload,
+    createSessionRequirement,
+    type SessionRequirementCreatePayload
+} from '../../api/userService';
 
 // --- Type Definitions for our data and props ---
 
@@ -169,6 +178,8 @@ const OptionCard: React.FC<OptionCardProps> = ({ text, isSelected, onSelect }) =
 // --- Main Page Component ---
 
 const OnboardingPage: React.FC = () => {
+    const { userId } = useParams<{ userId: string }>();
+    const navigate = useNavigate();
     const [currentStep, setCurrentStep] = useState<number>(0);
     const [answers, setAnswers] = useState<Record<number, string>>({
         1: '5',
@@ -191,6 +202,93 @@ const OnboardingPage: React.FC = () => {
 
     const handleAnswerSelect = (value: string): void => {
         setAnswers((prev) => ({ ...prev, [currentStep]: value }));
+    };
+
+    const handleSubmit = async () => {
+        if (!userId) {
+            console.error("User ID is missing!");
+            
+            return;
+        }
+        
+        const problemMap: Record<string, string> = {
+            "Twisting": "torso_rotation",
+            "Bending to the Side": "flank_stretch",
+            "Raising an Arm": "hiding_face" 
+        };
+
+        // 2. Extract and format the answers
+        const goalAnswer = answers[0];
+        const painScoreAnswer = parseInt(answers[1], 10);
+        const problemAnswer = answers[2];
+        const scheduleAnswer = parseInt(answers[3].split(' ')[0], 10); 
+
+        // 3. Prepare the main onboarding payload
+        const onboardingPayload: OnboardingCreatePayload = {
+            primary_goal: goalAnswer,
+            pain_score: painScoreAnswer,
+            preferred_schedule: scheduleAnswer,
+        };
+        
+        // 4. Prepare the problem area payload
+        const problemPayload: UserProblemCreatePayload = {
+            // Use the map to get the backend-specific name
+            problem_area: problemMap[problemAnswer] || problemAnswer,
+        };
+
+        let initialReps: number;
+        let initialSets: number;
+
+        if (painScoreAnswer >= 1 && painScoreAnswer <= 6) {
+            initialSets = 3;
+            initialReps = 5;
+        } else { // 7-10
+            initialSets = 2;
+            initialReps = 3;
+        }
+
+        // Logic: Map the problem name to an Exercise ID from your database.
+        // NOTE: This is a temporary mapping. In a real app, you might fetch this from the API.
+        // Let's assume the Exercise IDs in your DB are: 1=torso_rotation, 2=flank_stretch, 3=hiding_face
+        const exerciseIdMap: Record<string, number> = {
+            "torso_rotation": 1,
+            "flank_stretch": 2,
+            "hiding_face": 3
+        };
+
+        const assignedExerciseId = exerciseIdMap[problemPayload.problem_area];
+        
+        // Prepare the payload for the new API call
+        const requirementPayload: SessionRequirementCreatePayload = {
+            user_id: parseInt(userId),
+            exercise_id: assignedExerciseId,
+            number_of_reps: initialReps,
+            number_of_sets: initialSets,
+        };
+
+        try {
+            // Here you would set a loading state if you had one
+            
+            // 5. Send the data to the backend in parallel
+            await Promise.all([
+                createUserOnboarding(parseInt(userId), onboardingPayload),
+                createUserProblem(parseInt(userId), problemPayload),
+                createSessionRequirement(parseInt(userId), requirementPayload)
+            ]);
+
+            // 6. On success, trigger the completion animation
+            setIsComplete(true);
+
+            // 7. After a delay, redirect to the dashboard
+            setTimeout(() => {
+                navigate('/dashboard'); // Or wherever the user should go next
+            }, 3000); // 3-second delay to show the "You're all set!" message
+
+        } catch (error) {
+            console.error("Failed to submit onboarding data:", error);
+            // Here you would set an error state to show a message to the user
+            alert("There was a problem submitting your information. Please try again.");
+        }
     };
 
     const currentQuestionData = onboardingQuestions[currentStep];
@@ -279,7 +377,7 @@ const OnboardingPage: React.FC = () => {
                                 </motion.div>
                                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                                     <Button
-                                        onClick={handleNext}
+                                        onClick={isLastStep ? handleSubmit : handleNext}
                                         disabled={!answers[currentStep]}
                                         className="bg-[#0077B6] hover:bg-blue-600 text-white rounded-full px-10 py-4 text-base font-semibold disabled:bg-slate-300"
                                     >

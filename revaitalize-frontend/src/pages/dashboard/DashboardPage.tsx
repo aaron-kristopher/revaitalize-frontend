@@ -1,6 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSidebar } from "@/context/SidebarContext";
+
+import { useAuth } from "@/context/AuthContext"; // Import our auth hook
+// Import the API functions we'll need
+import { 
+    getUserSessionsByTime, // <-- ADD THIS
+    type Session,
+    // getUserSessionRequirements, 
+    // type SessionRequirement,
+    getExercises, 
+    type Exercise,
+    type TimeFilter,  
+} from "@/api/userService"; 
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -43,10 +55,58 @@ const InfoRow = ({ label, value }: { label: string; value: string }) => (
 
 const DashboardPage = () => {
   const { setSidebarOpen } = useSidebar();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("all");
   const [editMode, setEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  const [sessions, setSessions] = useState<Session[]>([]); // <-- New state for sessions
+  const [exercises, setExercises] = useState<Exercise[]>([]); 
+  
+  // State for loading and errors for our data fetch
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+      useEffect(() => {
+    // This effect runs once to get the list of all exercises for name mapping
+    const fetchAllExercises = async () => {
+        try {
+            const allExercises = await getExercises();
+            setExercises(allExercises);
+        } catch (err) {
+            console.error("Failed to fetch exercises list", err);
+            // You could set a specific error for this if needed
+        }
+    };
+    fetchAllExercises();
+  }, []); // Empty array means this runs only once when the component mounts
+
+    useEffect(() => {
+    if (user && activeTab) {
+      const fetchSessionData = async () => {
+        try {
+          setIsLoadingData(true);
+          
+          // If the 'all' tab is selected, we'll fetch for 'this_month' as a default.
+          // Otherwise, we use the activeTab value directly.
+          const filter = (activeTab === 'all' ? 'this_month' : activeTab) as TimeFilter;
+          
+          const fetchedSessions = await getUserSessionsByTime(user.id, filter);
+          setSessions(fetchedSessions);
+          setError(null);
+
+        } catch (err: any) {
+          console.error("Failed to fetch session data:", err);
+          setError(err.message);
+        } finally {
+          setIsLoadingData(false);
+        }
+      };
+
+      fetchSessionData();
+    }
+  }, [user, activeTab]); // <<< This now re-runs when the activeTab changes!
 
   const handleSaveChanges = () => {
     setIsSaving(true);
@@ -107,14 +167,23 @@ const DashboardPage = () => {
             <h2 className="text-xl font-bold text-slate-800 mb-4">General Information</h2>
             <Card className="shadow-sm">
               <CardContent className="p-4 md:p-6 space-y-4">
-                <InfoRow label="First Name" value="April Hymn" /> <Separator />
-                <InfoRow label="Last Name" value="Dela Cruz" /> <Separator />
-                <InfoRow label="Email" value="aprilhymn452@gmail.com" /> <Separator />
-                <InfoRow label="Contact Number" value="+639213375101" /> <Separator />
-                <InfoRow label="Sex" value="Female" /> <Separator />
-                <InfoRow label="Date of Birth" value="April 5, 2002" /> <Separator />
-                <InfoRow label="Address" value="Silay City" /> <Separator />
-                <InfoRow label="Last Session" value="June 15, 2025" />
+                {/* --- ADD A CHECK for the user object --- */}
+                {user ? (
+                  <>
+                    <InfoRow label="First Name" value={user.first_name} /> <Separator />
+                    <InfoRow label="Last Name" value={user.last_name} /> <Separator />
+                    <InfoRow label="Email" value={user.email} /> <Separator />
+                    <InfoRow label="Age" value={String(user.age)} /> <Separator />
+                    {/* Wala pa ang contatc number and sex gle ron */}
+                    {/* <InfoRow label="Contact Number" value="+639213375101" /> <Separator /> */}
+                    {/* <InfoRow label="Sex" value="Female" /> <Separator /> */}
+                    <InfoRow label="Address" value={user.address || 'Not provided'} /> <Separator />
+                    <InfoRow label="Last Session" value="Not tracked yet" />
+                  </>
+                ) : (
+                  // --- Optional: Show a loading state ---
+                  <p className="text-slate-500">Loading user information...</p>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -136,8 +205,8 @@ const DashboardPage = () => {
             <div className="flex items-center gap-4">
               <TabsList>
                 <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="lastWeek">Last Week</TabsTrigger>
-                <TabsTrigger value="thisMonth">This Month</TabsTrigger>
+                <TabsTrigger value="this_week">This Week</TabsTrigger>  {/* CHANGE THIS */}
+                <TabsTrigger value="this_month">This Month</TabsTrigger>      
                 <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
                 <TabsTrigger value="today">Today</TabsTrigger>
               </TabsList>
@@ -157,34 +226,68 @@ const DashboardPage = () => {
                   <div>Rate</div>
                 </div>
                 <div className="space-y-3 md:space-y-0">
-                  {(allSessionData[activeTab as keyof typeof allSessionData] || []).map((session) => (
-                    <div key={session.id} className="bg-white p-4 rounded-lg shadow-sm md:shadow-none md:rounded-none md:grid md:grid-cols-4 md:gap-4 md:items-center md:border-b md:border-slate-200">
-                      <div className="md:hidden">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="font-semibold text-slate-800">{session.exercise}</span>
-                          <span className="font-bold text-blue-600">{session.score}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-sm text-slate-500">
-                          <span>{session.date}</span>
-                          <span>{session.rate}</span>
-                        </div>
-                      </div>
-                      <div className="hidden md:flex items-center gap-2 text-sm text-slate-700"> <Calendar className="w-4 h-4 text-slate-400" /> <span>{session.date}</span></div>
-                      <div className="hidden md:block text-sm text-slate-600">{session.exercise}</div>
-                      <div className="hidden md:block text-sm font-medium text-slate-900">{session.score}</div>
-                      <div className="hidden md:block text-sm text-slate-600">
-                        <Badge className={
-                          session.status === 'success' ? 'border-transparent bg-emerald-600 text-white' :
-                            session.status === 'warning' ? 'border-transparent bg-amber-500 text-white' :
+                  {/* Add Loading and Error states */}
+                  {isLoadingData && <p className="p-4 text-center">Loading sessions...</p>}
+                  {error && <p className="p-4 text-center text-red-500">Error: {error}</p>}
+
+                  {/* Render the sessions */}
+                  {!isLoadingData && !error && sessions.map((session) => {
+                    // Find the exercise name from our 'exercises' state
+                    const exerciseName = exercises.find(ex => ex.id === session.exercise_id)?.name || 'Unknown Exercise';
+                    
+                    // Format the date for display
+                    const sessionDate = new Date(session.datetime_start).toLocaleDateString('en-US', {
+                      year: 'numeric', month: 'long', day: 'numeric'
+                    });
+                    
+                    // Determine the rate/status based on the score
+                    const score = session.session_quality_score || 0;
+                    let rate = "Needs Improvement";
+                    let status: 'success' | 'warning' | 'destructive' = 'destructive';
+                    if (score >= 90) { rate = "Excellent"; status = "success"; }
+                    else if (score >= 75) { rate = "Fair"; status = "warning"; }
+
+                    return (
+                      <div key={session.id} className="bg-white p-4 rounded-lg shadow-sm md:shadow-none md:rounded-none md:grid md:grid-cols-4 md:gap-4 md:items-center md:border-b md:border-slate-200">
+                        {/* --- Mobile View --- */}
+                        <div className="md:hidden">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="font-semibold text-slate-800">{exerciseName}</span>
+                            <span className="font-bold text-blue-600">{score.toFixed(0)}%</span>
+                          </div>
+                          <div className="flex justify-between items-center text-sm text-slate-500">
+                            <span>{sessionDate}</span>
+                            <Badge className={
+                              status === 'success' ? 'border-transparent bg-emerald-600 text-white' :
+                              status === 'warning' ? 'border-transparent bg-amber-500 text-white' :
                               'border-transparent bg-red-600 text-white'
-                        }>
-                          {session.rate}
-                        </Badge>
+                            }>
+                              {rate}
+                            </Badge>
+                          </div>
+                        </div>
+                        {/* --- Desktop View --- */}
+                        <div className="hidden md:flex items-center gap-2 text-sm text-slate-700">
+                            <Calendar className="w-4 h-4 text-slate-400" /> <span>{sessionDate}</span>
+                        </div>
+                        <div className="hidden md:block text-sm text-slate-600">{exerciseName}</div>
+                        <div className="hidden md:block text-sm font-medium text-slate-900">{score.toFixed(0)}%</div>
+                        <div className="hidden md:block text-sm text-slate-600">
+                          <Badge className={
+                            status === 'success' ? 'border-transparent bg-emerald-600 text-white' :
+                            status === 'warning' ? 'border-transparent bg-amber-500 text-white' :
+                            'border-transparent bg-red-600 text-white'
+                          }>
+                            {rate}
+                          </Badge>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                  {(allSessionData[activeTab as keyof typeof allSessionData] || []).length === 0 && (
-                    <div className="text-center p-12 text-slate-500 bg-white rounded-b-lg">No sessions recorded for this period.</div>
+                    );
+                  })}
+                  
+                  {/* 'No sessions' message */}
+                  {!isLoadingData && !error && sessions.length === 0 && (
+                    <div className="text-center p-12 ...">No sessions recorded for this period.</div>
                   )}
                 </div>
               </div>

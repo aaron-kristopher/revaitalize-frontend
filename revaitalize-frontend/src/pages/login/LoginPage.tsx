@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Add useNavigate
+import { useAuth } from "@/context/AuthContext"; // Import our new auth hook
+import { loginUser } from "@/api/authService";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,6 +20,41 @@ import BackgroundOrbs from "@/components/common/BackgroundOrbs";
 
 export const LoginPage: React.FC = () => {
     const [showPassword, setShowPassword] = useState<boolean>(false);
+
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const navigate = useNavigate();
+    const { login } = useAuth();
+
+    const handleSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            // We use FormData as required by OAuth2
+            const formData = new FormData();
+            formData.append('username', email);
+            formData.append('password', password);
+
+            const data = await loginUser(formData);
+
+            // On success, call the login function from our AuthContext
+            // This will update the global state and save the token
+            login(data.user, data.access_token);
+            
+            // Redirect to the dashboard
+            navigate('/dashboard');
+
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
         <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-r from-[#002356] to-[#004DBC] p-4 sm:p-8">
@@ -42,62 +79,70 @@ export const LoginPage: React.FC = () => {
                                 Please enter your details to log in.
                             </CardDescription>
                         </CardHeader>
-
-                        <CardContent className="grid gap-6 px-8">
-                            <div className="grid gap-2">
-                                <Label htmlFor="email" className="text-slate-200">
-                                    Email
-                                </Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    placeholder="name@example.com"
-                                    className="h-12 rounded-lg border-slate-400/50 bg-white/10 text-white placeholder:text-slate-400 focus:border-blue-300 focus:ring-0"
-                                />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <div className="flex items-center justify-between">
-                                    <Label htmlFor="password" className="text-slate-200">
-                                        Password
+                        <form onSubmit={handleSubmit}>
+                            <CardContent className="grid gap-6 px-8">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="email" className="text-slate-200">
+                                        Email
                                     </Label>
-                                    <Link
-                                        to="/forgot-password"
-                                        className="text-sm text-sky-300 hover:underline">
-                                            Forgot Password?
-                                    </Link>
-                                </div>
-                                <div className="relative">
                                     <Input
-                                        id="password"
-                                        type={showPassword ? "text" : "password"}
-                                        className="h-12 rounded-lg border-slate-400/50 bg-white/10 pr-10 text-white placeholder:text-slate-400 focus:border-blue-300 focus:ring-0"
+                                        id="email"
+                                        type="email"
+                                        value={email} 
+                                        onChange={(e) => setEmail(e.target.value)} 
+                                        required
+                                        placeholder="name@example.com"
+                                        className="h-12 rounded-lg border-slate-400/50 bg-white/10 text-white placeholder:text-slate-400 focus:border-blue-300 focus:ring-0"
                                     />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
-                                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                                    </button>
                                 </div>
-                            </div>
-                        </CardContent>
 
-                        <CardFooter className="flex flex-col gap-4 px-8 pb-8">
-                            <Button className="h-12 w-full rounded-lg bg-gradient-to-r from-blue-600 to-sky-500 font-bold text-white shadow-lg transition-all hover:from-sky-400 hover:to-blue-500">
-                                Login
-                            </Button>
+                                <div className="grid gap-2">
+                                    <div className="flex items-center justify-between">
+                                        <Label htmlFor="password" className="text-slate-200">
+                                            Password
+                                        </Label>
+                                        <Link
+                                            to="/forgot-password"
+                                            className="text-sm text-sky-300 hover:underline">
+                                                Forgot Password?
+                                        </Link>
+                                    </div>
+                                    <div className="relative">
+                                        <Input
+                                            id="password"
+                                             type={showPassword ? "text" : "password"}
+                                            value={password} 
+                                            onChange={(e) => setPassword(e.target.value)} 
+                                            required
+                                            className="h-12 rounded-lg border-slate-400/50 bg-white/10 pr-10 text-white placeholder:text-slate-400 focus:border-blue-300 focus:ring-0"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+                                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                        </button>
+                                    </div>
+                                </div>
+                            </CardContent>
 
-                            <div className="mt-2 flex w-full items-center justify-center text-sm">
-                                <span className="text-slate-400">No account?</span>
-                                <Button
-                                    variant="link"
-                                    className="font-semibold text-slate-200 hover:text-white"
-                                    asChild>
-                                        <Link to="/signup">Create one</Link>
+                            <CardFooter className="flex flex-col gap-4 px-8 pb-8">
+                                 {error && <p className="text-sm font-medium text-red-400">{error}</p>}
+                                <Button type="submit" disabled={isLoading} className="h-12 w-full rounded-lg bg-gradient-to-r from-blue-600 to-sky-500 font-bold text-white shadow-lg transition-all hover:from-sky-400 hover:to-blue-500">
+                                    {isLoading ? 'Logging in...' : 'Login'}
                                 </Button>
-                            </div>
-                        </CardFooter>
+
+                                <div className="mt-2 flex w-full items-center justify-center text-sm">
+                                    <span className="text-slate-400">No account?</span>
+                                    <Button
+                                        variant="link"
+                                        className="font-semibold text-slate-200 hover:text-white"
+                                        asChild>
+                                            <Link to="/signup">Create one</Link>
+                                    </Button>
+                                </div>
+                            </CardFooter>
+                        </form>
                     </Card>
                 </div>
             </div>
