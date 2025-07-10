@@ -3,11 +3,17 @@ import { Home, User, BarChart } from 'lucide-react';
 import { type LucideIcon } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
+import React, { useState, useEffect } from 'react'; // Add hooks
+import { useAuth } from '@/context/AuthContext'; // Import useAuth
+import { getUserSessionRequirements } from '@/api/userService'; 
+
+
 interface NavItem {
   to: string;
   title: string;
   Icon: LucideIcon;
 }
+
 
 const navItems: NavItem[] = [
   { to: '/app', title: 'Dashboard', Icon: Home },
@@ -21,6 +27,34 @@ interface RouteSelectProps {
 }
 
 function RouteSelect({ open }: RouteSelectProps) {
+  const { user } = useAuth(); // Get the user from context
+  const [sessionLink, setSessionLink] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      getUserSessionRequirements(user.id)
+        .then(requirements => {
+          if (requirements && requirements.length > 0) {
+            // If exercises are assigned, create a link to the first one
+            setSessionLink(`/app/session/${requirements[0].id}`);
+          } else {
+            // If no exercises are assigned, set the link to null
+            setSessionLink(null);
+          }
+        })
+        .catch(err => {
+          console.error("Failed to get requirements for sidebar nav:", err);
+          setSessionLink(null);
+        });
+    }
+  }, [user]);
+
+  const navItems: NavItem[] = [
+    { to: '/app', title: 'Dashboard', Icon: Home },
+    { to: '/app/profile', title: 'Profile', Icon: User },
+    ...(sessionLink ? [{ to: sessionLink, title: 'Session', Icon: BarChart }] : [])
+  ];
+
   return (
     <div className="space-y-2 mt-6">
       {navItems.map((item) => (

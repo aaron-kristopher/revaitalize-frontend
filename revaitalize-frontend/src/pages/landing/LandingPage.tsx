@@ -25,24 +25,24 @@ type Service = {
 
 const LandingPage: React.FC = () => {
     const features: Feature[] = [
-        { icon: "🧠", title: "Feature 1", description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry." },
-        { icon: "📊", title: "Feature 2", description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry." },
-        { icon: "🎯", title: "Feature 3", description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry." },
-        { icon: "📱", title: "Feature 4", description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry." },
-        { icon: "👨‍⚕️", title: "Feature 5", description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry." },
-        { icon: "🔔", title: "Feature 6", description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry." }
+        { icon: "💪", title: "Instant Form Correction", description: "Get immediate visual cues to let you know if you're on the right track." },
+        { icon: "📊", title: "Personalized Progress Dashboard", description: "Visualize your journey with detailed analytics. Track your consistency, see performance trends, and stay motivated by your achievements." },
+        { icon: "🧠", title: "Intelligent Focus", description: "Our AI knows which joints matter most for each exercise. It focuses its analysis on crucial areas to give you precise, relevant feedback." },
+        { icon: "📱", title: "No Special Hardware Needed", description: "RevAItalize works with the camera you already own. No need for expensive sensors or wearables to get started." },
+        { icon: "👨‍⚕️", title: "Bridge the Gap with Your Therapist", description: "Easily share objective performance data with your physical therapist, enabling them to provide better-informed advice and monitor your progress." },
+        { icon: "🛤️", title: "Stay on Track", description: "Receive real-time feedback and notifications to keep you motivated and on track." }
     ];
 
     const exercises: Exercise[] = [
-        { image: flankStretch, title: "Flank Stretch", description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry.", duration: "5-10 mins" },
-        { image: torsoRotation, title: "Torso Rotation", description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry.", duration: "8-12 mins" },
-        { image: hidingFace, title: "Hiding Face", description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry.", duration: "10-15 mins" }
+        { image: flankStretch, title: "Flank Stretch", description: "Gently targets the muscles along the side of your torso and lower back, helping to release tension and improve flexibility.", duration: "3-5 mins" },
+        { image: torsoRotation, title: "Torso Rotation", description: "Improves spinal mobility and strengthens your core obliques, which are crucial for supporting your lower back.", duration: "3-5 mins" },
+        { image: hidingFace, title: "Hiding Face", description: "Engages the shoulder, upper back, and neck muscles to improve posture and promote overall spinal stability.", duration: "3-5 mins" }
     ];
 
     const services: Service[] = [
-        { title: "Service 1", description: "Lorem Ipsum is simply dummy text" },
-        { title: "Service 2", description: "Lorem Ipsum is simply dummy text" },
-        { title: "Service 3", description: "Lorem Ipsum is simply dummy text" }
+        { title: "Real-Time Exercise Analysis", description: "Live feedback and form correction for our core set of rehabilitation exercises." },
+        { title: "Personalized Progress Tracking", description: "An interactive dashboard to monitor your activity, session history, and improvements." },
+        { title: "Therapist Collaboration", description: "A secure way to share your progress reports with your healthcare provider." }
     ];
 
 
@@ -72,7 +72,7 @@ const LandingPage: React.FC = () => {
                                     </span>
                                 </h1>
                                 <p className="max-w-2xl text-xl leading-relaxed text-blue-100">
-                                    Lorem Ipsum is simply dummy tesxt of the printing and typesetting industry.
+                                    Correct your form. Accelerate your recovery.
                                 </p>
                             </div>
 
@@ -109,8 +109,9 @@ const LandingPage: React.FC = () => {
                                     What is RevAItalize?
                                 </h2>
                                 <p className="text-lg leading-relaxed text-gray-600">
-                                    Lorem Ipsum is simply dummy text of the printing and typesetting industry.
-                                    Lorem Ipsum has been the industry's standard dummy text ever since the 1500s
+                                RevAItalize is a smart virtual companion designed to guide you through your post-rehabilitation journey. 
+                                We use artificial intelligence to analyze your exercise form in real-time, 
+                                providing the expert guidance you need to heal properly and confidently.
                                 </p>
                             </div>
                             {/* Features */}
@@ -118,27 +119,27 @@ const LandingPage: React.FC = () => {
                                 <div className="flex items-start space-x-3">
                                     <CheckCircle className="mt-1 h-6 w-6 flex-shrink-0 text-green-500" />
                                     <div>
-                                        <h4 className="font-semibold text-[#002356]">Topic 1</h4>
+                                        <h4 className="font-semibold text-[#002356]">AI-Powered Form Correction</h4>
                                         <p className="text-gray-600">
-                                            Lorem Ipsum is simply dummy text of the printing and typesetting.
+                                            Our system intelligently tracks your key joints and movements, ensuring every stretch and rotation is performed with the correct technique.
                                         </p>
                                     </div>
                                 </div>
                                 <div className="flex items-start space-x-3">
                                     <CheckCircle className="mt-1 h-6 w-6 flex-shrink-0 text-green-500" />
                                     <div>
-                                        <h4 className="font-semibold text-[#002356]">Topic 2</h4>
+                                        <h4 className="font-semibold text-[#002356]">Accessible Anywhere, Anytime</h4>
                                         <p className="text-gray-600">
-                                            Lorem Ipsum is simply dummy text of the printing and typesetting.
+                                            All you need is your device. Get expert-level guidance without appointments or special equipment.
                                         </p>
                                     </div>
                                 </div>
                                 <div className="flex items-start space-x-3">
                                     <CheckCircle className="mt-1 h-6 w-6 flex-shrink-0 text-green-500" />
                                     <div>
-                                        <h4 className="font-semibold text-[#002356]">Topic 3</h4>
+                                        <h4 className="font-semibold text-[#002356]">Safer, Faster Recovery</h4>
                                         <p className="text-gray-600">
-                                            Lorem Ipsum is simply dummy text of the printing and typesetting.
+                                            By preventing incorrect form, you minimize the risk of re-injury and help your body build the right muscle memory to heal more efficiently.
                                         </p>
                                     </div>
                                 </div>
@@ -160,8 +161,7 @@ const LandingPage: React.FC = () => {
                                     </div>
                                     <div className="border-l-4 border-green-700 pl-4">
                                         <p className="font-medium italic text-[#002356]">
-                                            "Lorem Ipsum is simply dummy text of the printing and typesetting industry.
-                                            Lorem Ipsum has been the industry's standard dummy text ever since the 1500s"
+                                            "To ensure healthy lives and promote well-being for all people."
                                         </p>
                                     </div>                                      
                                 </div>
@@ -184,8 +184,7 @@ const LandingPage: React.FC = () => {
                             How we can help
                         </h2>
                         <p className="mx-auto max-w-3xl text-xl text-blue-100">
-                            Lorem Ipsum is simply dummy text of the printing and typesetting industry.
-                            Lorem Ipsum has been the industry's standard dummy text ever since the 1500s
+                            Our platform is built on a foundation of deep learning technology to deliver features that make a real difference in your recovery. Here’s how we support your journey back to wellness.
                         </p>
                     </div>
 
@@ -211,8 +210,7 @@ const LandingPage: React.FC = () => {
                             What are the exercises?
                         </h2>
                         <p className="mx-auto max-w-3xl text-xl text-gray-600">
-                            Lorem Ipsum is simply dummy text of the printing and typesetting industry.
-                            Lorem Ipsum has been the industry's standard dummy text ever since the 1500s
+                            Our program focuses on three core exercises, chosen for their proven effectiveness in lower back pain rehabilitation and their suitability for AI-based analysis.
                         </p>
                     </div>
 
@@ -257,7 +255,7 @@ const LandingPage: React.FC = () => {
                             <div className="space-y-4">
                                 <h2 className="text-4xl font-bold leading-tight lg:text-5xl">Services</h2>
                                 <p className="text-xl leading-relaxed text-blue-100">
-                                    Lorem Ipsum is simply dummy text of the printing and typesetting industry.
+                                    We offer a comprehensive platform to support your entire recovery journey, from your first stretch to maintaining long-term wellness.
                                 </p>
                             </div>
 
@@ -277,7 +275,7 @@ const LandingPage: React.FC = () => {
                             <div className="rounded-3xl bg-white/10 p-8 backdrop-blur-sm">
                                 <div className="space-y-6">
                                     <h3 className="text-2xl font-bold text-white">Start Your Recovery Today</h3>
-                                    <p className="text-blue-100">Lorem Ipsum is simply dummy text</p>
+                                    <p className="text-blue-100">Sign up for free to access our exercises and start your journey towards a stronger, healthier back today.                                    </p>
 
                                     <div className="space-y-4">
                                         <button className="w-full transform rounded-xl bg-white px-6 py-4 font-bold text-[#002356] transition-all duration-300 hover:scale-105 hover:bg-blue-50">
@@ -286,7 +284,7 @@ const LandingPage: React.FC = () => {
                                     </div>
 
                                     <div className="border-t border-white/20 pt-6">
-                                        <p className="text-center text-sm text-blue-200">Free assessment</p>
+                                        <p className="text-center text-sm text-blue-200">Free access to exercises & tracking features.</p>
                                     </div>
                                 </div>
                             </div>

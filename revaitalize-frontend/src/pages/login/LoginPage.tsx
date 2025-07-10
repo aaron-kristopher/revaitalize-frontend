@@ -47,7 +47,7 @@ export const LoginPage: React.FC = () => {
             login(data.user, data.access_token);
             
             // Redirect to the dashboard
-            navigate('/dashboard');
+            navigate('/app');
 
         } catch (err: any) {
             setError(err.message);
@@ -78,6 +78,7 @@ export const LoginPage: React.FC = () => {
                             <CardDescription className="text-slate-300">
                                 Please enter your details to log in.
                             </CardDescription>
+                            {error && <p className="text-sm font-medium text-red-400 pt-3">{error}</p>}
                         </CardHeader>
                         <form onSubmit={handleSubmit}>
                             <CardContent className="grid gap-6 px-8">
@@ -127,7 +128,7 @@ export const LoginPage: React.FC = () => {
                             </CardContent>
 
                             <CardFooter className="flex flex-col gap-4 px-8 pb-8">
-                                 {error && <p className="text-sm font-medium text-red-400">{error}</p>}
+                                <br />
                                 <Button type="submit" disabled={isLoading} className="h-12 w-full rounded-lg bg-gradient-to-r from-blue-600 to-sky-500 font-bold text-white shadow-lg transition-all hover:from-sky-400 hover:to-blue-500">
                                     {isLoading ? 'Logging in...' : 'Login'}
                                 </Button>

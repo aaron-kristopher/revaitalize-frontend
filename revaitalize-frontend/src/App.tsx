@@ -50,10 +50,10 @@ function App() {
         
         {/* Child routes. The `path` is relative to the parent "/app" */}
         {/* This will correctly match URLs like "/app/session/1", "/app/session/2", etc. */}
-        <Route path="session/:requirementId" element={<SessionPage />} />
-        
-        {/* This will correctly match the URL "/app/profile" */}
-        <Route path="profile" element={<ProfilePage />} />
+        <Route path="session/:requirementId" element={<SessionPage />} /> 
+  
+        {/* This now correctly renders ProfilePage at `/app/profile` */}
+        <Route path="profile" element={<ProfilePage />} /> 
       </Route>
       
       {/* Optional: Add a catch-all "Not Found" route at the end */}

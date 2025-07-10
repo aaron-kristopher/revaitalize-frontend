@@ -55,7 +55,7 @@ const ExercisesOverview: React.FC = () => {
               Exercises
             </h1>
             <p className="mx-auto max-w-3xl text-xl leading-relaxed text-blue-100 md:text-2xl mb-8">
-              Lorem Ipsum is simply dummy tesxt of the printing and typesetting industry.
+            Explore our curated set of exercises, specifically selected for their proven benefits in low back pain rehabilitation. Each movement is designed to be safe, effective, and perfectly suited for analysis by our AI.
             </p>
             <div className="flex flex-wrap justify-center gap-8 text-sm">
               <div className="flex items-center gap-2">

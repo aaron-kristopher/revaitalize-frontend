@@ -43,7 +43,7 @@ const ModelsPage: React.FC = () => {
               Models
             </h1>
             <p className="mx-auto max-w-3xl text-xl leading-relaxed text-indigo-100 md:text-2xl mb-8">
-              Lorem Ipsum is simply dummy tesxt of the printing and typesetting industry.
+            Discover the powerful artificial intelligence that powers RevAItalize. Our platform is built on models that work together to understand human movement and provide you with expert-level guidance.
             </p>
             <div className="flex flex-wrap justify-center gap-8 text-sm">
               <div className="flex items-center gap-2">
