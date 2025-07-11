@@ -250,7 +250,7 @@ function SessionPage() {
         setError("There was a problem saving your session results.");
       }
     } else {
-      navigate('/app/dashboard');
+      navigate('/app');
     }
   }, [user, navigate]);
 
@@ -266,12 +266,12 @@ function SessionPage() {
         setIsPainModalOpen(true);
       } else {
         alert("Session complete! Great work.");
-        navigate('/app/dashboard');
+        navigate('/app');
       }
     } catch (err) {
       console.error("Failed to fetch data for progression check:", err);
       alert("Session complete! Could not check for progression update.");
-      navigate('/app/dashboard');
+      navigate('/app');
     }
   }, [user, navigate]);
 
@@ -297,7 +297,7 @@ function SessionPage() {
       console.error("Failed to update progression:", err);
       alert("Could not save your progression for next week. Please try again later.");
     } finally {
-      navigate('/app/dashboard');
+      navigate('/app');
     }
   }, [user, activeRequirement, painScore, navigate]);
 

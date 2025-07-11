@@ -1,6 +1,9 @@
+// src/pages/Dashboard/DashboardPage.tsx
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSidebar } from "@/context/SidebarContext";
+
 import { useAuth } from "@/context/AuthContext";
 import {
   getUserSessionsByTimeRange,
@@ -9,55 +12,38 @@ import {
   type Exercise,
   type TimeFilter,
 } from "@/api/userService";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
-import { Edit3, Calendar, Download, Check, Loader2, TrendingUp, Activity } from "lucide-react";
+import { Edit3, Calendar, Download, Check, Loader2 } from "lucide-react";
 import sidebarLogo from "@/assets/imgs/sidebar.png";
 
 
-const InfoRow = ({ label, value }: { label: string | React.ReactNode; value: string | React.ReactNode }) => (
+const InfoRow = ({ label, value }: { label: string; value: string }) => (
   <div className="flex justify-between items-center">
     <span className="text-sm text-slate-500">{label}</span>
     <span className="text-sm font-semibold text-slate-900 text-right">{value}</span>
   </div>
 );
 
-// Define the structure for our chart data
-interface ChartData {
-  date: string;
-  score: number | null;
-}
-
 const DashboardPage = () => {
   const { setSidebarOpen } = useSidebar();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("this_week"); // Default to this_week for better chart view
+  const [activeTab, setActiveTab] = useState("all");
   const [editMode, setEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   const [sessions, setSessions] = useState<Session[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [chartData, setChartData] = useState<ChartData[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // This effect fetches the list of all exercises once on mount
   useEffect(() => {
     const fetchAllExercises = async () => {
       try {
@@ -70,15 +56,19 @@ const DashboardPage = () => {
     fetchAllExercises();
   }, []);
 
-  // This effect fetches session data whenever the user or active tab changes
   useEffect(() => {
     if (user && activeTab) {
       const fetchSessionData = async () => {
         try {
           setIsLoadingData(true);
-          const fetchedSessions = await getUserSessionsByTimeRange(user.id, activeTab as TimeFilter);
+          // Special handling for the 'all' tab to show this_month by default
+          const filter = (activeTab === 'all' ? 'this_month' : activeTab) as TimeFilter;
+
+          const fetchedSessions = await getUserSessionsByTimeRange(user.id, filter);
+
           setSessions(fetchedSessions);
           setError(null);
+
         } catch (err: any) {
           console.error("Failed to fetch session data:", err);
           setError(err.message);
@@ -86,43 +76,12 @@ const DashboardPage = () => {
           setIsLoadingData(false);
         }
       };
+
       fetchSessionData();
     }
   }, [user, activeTab]);
 
-  // --- NEW: This effect transforms session data for the chart ---
-  useEffect(() => {
-    if (sessions.length > 0) {
-      // Group sessions by date and calculate average score
-      const dailyScores = sessions.reduce((acc, session) => {
-        const date = new Date(session.datetime_start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        if (!acc[date]) {
-          acc[date] = { scores: [], count: 0 };
-        }
-        if (session.session_quality_score !== null && session.session_quality_score !== undefined) {
-          acc[date].scores.push(session.session_quality_score);
-          acc[date].count++;
-        }
-        return acc;
-      }, {} as Record<string, { scores: number[], count: number }>);
-
-      const formattedData = Object.entries(dailyScores).map(([date, data]) => ({
-        date,
-        score: data.count > 0 ? data.scores.reduce((a, b) => a + b, 0) / data.count : null,
-
-      })).reverse(); // Reverse to show chronological order
-
-      console.log("format: ", formattedData);
-
-      setChartData(formattedData);
-    } else {
-      setChartData([]);
-    }
-  }, [sessions]);
-
-
   const handleSaveChanges = () => {
-    // This is placeholder logic, can be expanded later
     setIsSaving(true);
     setSaveSuccess(false);
     setTimeout(() => {
@@ -148,12 +107,26 @@ const DashboardPage = () => {
             </Button>
             <Breadcrumb>
               <BreadcrumbList>
-                <BreadcrumbItem><BreadcrumbPage className="text-xl font-semibold text-slate-900">Home</BreadcrumbPage></BreadcrumbItem>
+                <BreadcrumbItem>
+                  <BreadcrumbPage className="text-xl font-semibold text-slate-900">Home</BreadcrumbPage>
+                </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          {/* We can hide the edit button for now as the chart is not editable */}
-          {/* {editMode ? ( ... ) : ( ... )} */}
+          {editMode ? (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => setEditMode(false)} disabled={isSaving}>Cancel</Button>
+              <Button onClick={handleSaveChanges} disabled={isSaving || saveSuccess} className="w-32">
+                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {saveSuccess && <Check className="mr-2 h-4 w-4" />}
+                {saveSuccess ? 'Saved!' : isSaving ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          ) : (
+            <Button variant="ghost" onClick={() => setEditMode(true)} className="text-slate-600 hover:text-slate-900">
+              <Edit3 className="w-4 h-4 mr-2" /> Edit info
+            </Button>
+          )}
         </div>
       </header>
 
@@ -162,7 +135,6 @@ const DashboardPage = () => {
         variants={pageVariants} initial="initial" animate="in" transition={{ duration: 0.5 }}
       >
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          {/* General Information Column */}
           <div className="lg:col-span-2">
             <h2 className="text-xl font-bold text-slate-800 mb-4">General Information</h2>
             <Card className="shadow-sm">
@@ -173,7 +145,8 @@ const DashboardPage = () => {
                     <InfoRow label="Last Name" value={user.last_name} /> <Separator />
                     <InfoRow label="Email" value={user.email} /> <Separator />
                     <InfoRow label="Age" value={String(user.age)} /> <Separator />
-                    <InfoRow label="Address" value={user.address || 'Not provided'} />
+                    <InfoRow label="Address" value={user.address || 'Not provided'} /> <Separator />
+                    <InfoRow label="Last Session" value="Not tracked yet" />
                   </>
                 ) : (
                   <p className="text-slate-500">Loading user information...</p>
@@ -181,51 +154,23 @@ const DashboardPage = () => {
               </CardContent>
             </Card>
           </div>
-
-          {/* --- NEW CHART SECTION --- */}
           <div className="lg:col-span-3">
-            <h2 className="text-xl font-bold text-slate-800 mb-4">Weekly Progress</h2>
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2"><TrendingUp className="w-5 h-5" /> Session Score Trend</CardTitle>
-                <CardDescription>Average form quality score over the selected period.</CardDescription>
-              </CardHeader>
-              <CardContent className="h-80 pr-2">
-                {chartData.length > 1 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.5} />
-                      <XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                      <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}%`} />
-                      <Tooltip
-                        contentStyle={{
-                          background: "rgba(255, 255, 255, 0.9)",
-                          border: "1px solid #e2e8f0",
-                          borderRadius: "0.5rem",
-                          boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
-                        }}
-                      />
-                      <Legend />
-                      <Line type="monotone" dataKey="score" stroke="#4f46e5" strokeWidth={2} activeDot={{ r: 8 }} name="Avg. Score" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-center text-slate-500">
-                    <Activity className="w-12 h-12 mb-4 text-slate-400" />
-                    <p className="font-semibold">Not Enough Data to Display Chart</p>
-                    <p className="text-sm">Complete at least two sessions to see your progress.</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <h2 className="text-xl font-bold text-slate-800 mb-4">Medical Information</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Textarea className="h-32 resize-none" placeholder="Medical Condition" disabled={!editMode} />
+              <Textarea className="h-32 resize-none" placeholder="Allergies" disabled={!editMode} />
+              <Textarea className="h-32 resize-none" placeholder="Medications" disabled={!editMode} />
+              <Textarea className="h-32 resize-none" placeholder="Notes" disabled={!editMode} />
+            </div>
           </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
-            <h2 className="text-xl font-bold text-slate-800">Session History</h2>
+            <h2 className="text-xl font-bold text-slate-800">All Sessions</h2>
             <div className="flex items-center gap-4">
               <TabsList>
+                <TabsTrigger value="all">All</TabsTrigger>
                 <TabsTrigger value="this_week">This Week</TabsTrigger>
                 <TabsTrigger value="this_month">This Month</TabsTrigger>
                 <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
@@ -239,18 +184,15 @@ const DashboardPage = () => {
 
           <motion.div key={activeTab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
             <TabsContent value={activeTab} className="mt-0">
-              <div className="border border-slate-200 rounded-lg bg-white">
-                <div className="hidden md:grid md:grid-cols-4 gap-4 text-xs font-medium text-slate-500 uppercase tracking-wide p-4 bg-slate-100 rounded-t-lg">
+              <div className="mt-4">
+                <div className="hidden md:grid md:grid-cols-4 gap-4 text-xs font-medium text-slate-500 uppercase tracking-wide p-4 bg-slate-200/60 rounded-t-lg">
                   <div>Date</div>
                   <div>Exercise</div>
                   <div>Score</div>
-                  <div>Performance</div>
+                  <div>Rate</div>
                 </div>
-                <div className="divide-y divide-slate-200 md:divide-y-0">
-                  {isLoadingData && <div className="p-8 text-center text-slate-500">
-                    <Loader2 className="mx-auto h-8 w-8 animate-spin mb-2" />
-                    Loading sessions...
-                  </div>}
+                <div className="space-y-3 md:space-y-0">
+                  {isLoadingData && <p className="p-4 text-center">Loading sessions...</p>}
                   {error && <p className="p-4 text-center text-red-500">Error: {error}</p>}
 
                   {!isLoadingData && !error && sessions.map((session) => {
@@ -261,12 +203,12 @@ const DashboardPage = () => {
 
                     const score = session.session_quality_score || 0;
                     let rate = "Needs Improvement";
-                    let status: "success" | "warning" | "destructive" = "destructive";
+                    let status: 'success' | 'warning' | 'destructive' = 'destructive';
                     if (score >= 90) { rate = "Excellent"; status = "success"; }
-                    else if (score >= 75) { rate = "Good"; status = "warning"; }
+                    else if (score >= 75) { rate = "Fair"; status = "warning"; }
 
                     return (
-                      <div key={session.id} className="p-4 md:grid md:grid-cols-4 md:gap-4 md:items-center">
+                      <div key={session.id} className="bg-white p-4 rounded-lg shadow-sm md:shadow-none md:rounded-none md:grid md:grid-cols-4 md:gap-4 md:items-center md:border-b md:border-slate-200">
                         {/* Mobile View */}
                         <div className="md:hidden">
                           <div className="flex justify-between items-center mb-2">
@@ -275,7 +217,11 @@ const DashboardPage = () => {
                           </div>
                           <div className="flex justify-between items-center text-sm text-slate-500">
                             <span>{sessionDate}</span>
-                            <Badge variant={status}>
+                            <Badge className={
+                              status === 'success' ? 'border-transparent bg-emerald-600 text-white' :
+                                status === 'warning' ? 'border-transparent bg-amber-500 text-white' :
+                                  'border-transparent bg-red-600 text-white'
+                            }>
                               {rate}
                             </Badge>
                           </div>
@@ -287,7 +233,11 @@ const DashboardPage = () => {
                         <div className="hidden md:block text-sm text-slate-600">{exerciseName}</div>
                         <div className="hidden md:block text-sm font-medium text-slate-900">{score.toFixed(0)}%</div>
                         <div className="hidden md:block text-sm text-slate-600">
-                          <Badge variant={status}>
+                          <Badge className={
+                            status === 'success' ? 'border-transparent bg-emerald-600 text-white' :
+                              status === 'warning' ? 'border-transparent bg-amber-500 text-white' :
+                                'border-transparent bg-red-600 text-white'
+                          }>
                             {rate}
                           </Badge>
                         </div>
@@ -296,7 +246,7 @@ const DashboardPage = () => {
                   })}
 
                   {!isLoadingData && !error && sessions.length === 0 && (
-                    <div className="text-center p-12">No sessions recorded for this period.</div>
+                    <div className="text-center p-12 bg-white rounded-b-lg">No sessions recorded for this period.</div>
                   )}
                 </div>
               </div>
