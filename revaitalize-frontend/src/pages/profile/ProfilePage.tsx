@@ -17,7 +17,7 @@ import { LogOut } from 'lucide-react';
 
 const ProfilePage: React.FC = () => {
     const { setSidebarOpen } = useSidebar();
-    const { user, login, logout } = useAuth(); 
+    const { user, login, logout } = useAuth();
 
     // State to manage the form inputs
     const [formData, setFormData] = useState<UserUpdatePayload>({
@@ -71,7 +71,7 @@ const ProfilePage: React.FC = () => {
             if (token) {
                 login(updatedUser, token);
             }
-            
+
             setSaveSuccess(true);
         } catch (err: any) {
             setError(err.message);
@@ -92,10 +92,6 @@ const ProfilePage: React.FC = () => {
             {/* --- Standard Header --- */}
             <header className="sticky top-0 bg-white border-b border-slate-200 px-4 md:px-6 py-4 z-10">
                 <div className="flex items-center justify-between">
-                    <Button variant="ghost" onClick={logout} className="text-red-600 hover:bg-red-100 hover:text-red-700">
-                        <LogOut className="w-4 h-4 mr-2" />
-                        Logout
-                    </Button>
                     <div className="flex items-center gap-3">
                         <Button variant="ghost" size="icon" onClick={() => setSidebarOpen((prev) => !prev)} className="hover:bg-slate-100 hidden md:inline-flex">
                             <img src={sidebarLogo} alt="Menu Icon" className="w-6 h-6" />
@@ -108,6 +104,10 @@ const ProfilePage: React.FC = () => {
                             </BreadcrumbList>
                         </Breadcrumb>
                     </div>
+                    <Button variant="ghost" onClick={logout} className="text-red-600 hover:bg-red-100 hover:text-red-700">
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Logout
+                    </Button>
                 </div>
             </header>
 
@@ -125,7 +125,9 @@ const ProfilePage: React.FC = () => {
                         className="relative cursor-pointer group"
                     >
                         <Avatar className="h-24 w-24 border-4 border-white shadow-lg">
-                            <AvatarImage src={profileImage} alt="April Hymn" />
+                            <img
+                                src="https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=Jude"
+                                alt="avatar" />
                             <AvatarFallback>AH</AvatarFallback>
                         </Avatar>
                         <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -140,9 +142,9 @@ const ProfilePage: React.FC = () => {
 
                 <Tabs defaultValue="profile" className="w-full">
                     <TabsList className="grid w-full grid-cols-3 max-w-md">
-                        <TabsTrigger value="profile"><User className="w-4 h-4 mr-2"/> Profile Details</TabsTrigger>
-                        <TabsTrigger value="security"><Shield className="w-4 h-4 mr-2"/> Security</TabsTrigger>
-                        <TabsTrigger value="notifications"><Bell className="w-4 h-4 mr-2"/> Notifications</TabsTrigger>
+                        <TabsTrigger value="profile"><User className="w-4 h-4 mr-2" /> Profile Details</TabsTrigger>
+                        <TabsTrigger value="security"><Shield className="w-4 h-4 mr-2" /> Security</TabsTrigger>
+                        <TabsTrigger value="notifications"><Bell className="w-4 h-4 mr-2" /> Notifications</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="profile" asChild>
@@ -220,7 +222,7 @@ const ProfilePage: React.FC = () => {
                     </TabsContent>
 
                     <TabsContent value="notifications" asChild>
-                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}>
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}>
                             <Card className="mt-6">
                                 <CardHeader>
                                     <CardTitle>Notification Settings</CardTitle>
@@ -237,7 +239,7 @@ const ProfilePage: React.FC = () => {
                                             <div className="w-4 h-4 bg-white rounded-full shadow-md transform translate-x-4 transition-transform"></div>
                                         </div>
                                     </div>
-                                     <div className="flex items-center justify-between p-4 border rounded-lg">
+                                    <div className="flex items-center justify-between p-4 border rounded-lg">
                                         <div>
                                             <Label htmlFor="sessionReminders" className="font-semibold">Session Reminders</Label>
                                             <p className="text-sm text-slate-500">Get a push notification 15 minutes before a scheduled session.</p>

@@ -43,7 +43,7 @@ export const usePoseSequence = () => {
   const isReadyToPredict = useRef<boolean>(true);
   const frameCount = useRef<number>(0);
 
-  const sendSequenceForPrediction = useCallback(async () => {
+  const sendSequenceForPrediction = useCallback(async (exerciseName: string) => {
 
     if (landmarkSequence.current.length < 20 || !isReadyToPredict.current) {
       return;
@@ -53,13 +53,16 @@ export const usePoseSequence = () => {
     isReadyToPredict.current = false;
 
     try {
-      const url = "http://127.0.0.1:8001/api/predict/";
+      const url = "http://127.0.0.1:8001/predict/api/predict/";
       const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ list_landmarks: landmarkSequence.current })
+        body: JSON.stringify({
+          list_landmarks: landmarkSequence.current,
+          exercise_name: exerciseName
+        })
       })
 
       if (!response.ok) {
@@ -79,17 +82,13 @@ export const usePoseSequence = () => {
     }
   }, [])
 
-  const processFrame = useCallback(async (ohe: number[], landmarks: BlazePoseLandmarks[]) => {
+  const processFrame = useCallback(async (ohe: number[], landmarks: BlazePoseLandmarks[], exerciseName: string) => {
     frameCount.current++;
 
     if (frameCount.current % 3 !== 0) {
       return;
     }
 
-    // blazeposeLandmarks is an Array[33] of Obj
-    // Each Obj has 3 values (x,y,z) coordinates.
-    // I try to flatten it by first filtering the keypoint index then
-    // extracting the values from the object array
     const filteredLandmarks = KEYPOINTS_IDX.map(index => landmarks[index]).flatMap(lm => [lm.x, lm.y, lm.z]);
     const frameData: number[] = [...ohe, ...filteredLandmarks];
 
@@ -100,7 +99,7 @@ export const usePoseSequence = () => {
     landmarkSequence.current.push(frameData)
 
     if (landmarkSequence.current.length === 20 && isReadyToPredict.current) {
-      sendSequenceForPrediction()
+      sendSequenceForPrediction(exerciseName)
     }
 
   }, [sendSequenceForPrediction]);

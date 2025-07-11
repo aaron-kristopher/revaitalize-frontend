@@ -4,12 +4,12 @@ import { useAuth } from "@/context/AuthContext"; // Import our new auth hook
 import { loginUser } from "@/api/authService";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  CardDescription,
+    Card,
+    CardContent,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+    CardDescription,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,7 +45,7 @@ export const LoginPage: React.FC = () => {
             // On success, call the login function from our AuthContext
             // This will update the global state and save the token
             login(data.user, data.access_token);
-            
+
             // Redirect to the dashboard
             navigate('/app');
 
@@ -58,7 +58,7 @@ export const LoginPage: React.FC = () => {
 
     return (
         <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-r from-[#002356] to-[#004DBC] p-4 sm:p-8">
-            <BackgroundOrbs/>
+            <BackgroundOrbs />
 
             <div className="relative z-10 flex w-full max-w-5xl items-center justify-center gap-8 sm:gap-16">
                 {/* LEFT */}
@@ -89,8 +89,8 @@ export const LoginPage: React.FC = () => {
                                     <Input
                                         id="email"
                                         type="email"
-                                        value={email} 
-                                        onChange={(e) => setEmail(e.target.value)} 
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
                                         required
                                         placeholder="name@example.com"
                                         className="h-12 rounded-lg border-slate-400/50 bg-white/10 text-white placeholder:text-slate-400 focus:border-blue-300 focus:ring-0"
@@ -105,15 +105,15 @@ export const LoginPage: React.FC = () => {
                                         <Link
                                             to="/forgot-password"
                                             className="text-sm text-sky-300 hover:underline">
-                                                Forgot Password?
+                                            Forgot Password?
                                         </Link>
                                     </div>
                                     <div className="relative">
                                         <Input
                                             id="password"
-                                             type={showPassword ? "text" : "password"}
-                                            value={password} 
-                                            onChange={(e) => setPassword(e.target.value)} 
+                                            type={showPassword ? "text" : "password"}
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
                                             required
                                             className="h-12 rounded-lg border-slate-400/50 bg-white/10 pr-10 text-white placeholder:text-slate-400 focus:border-blue-300 focus:ring-0"
                                         />
@@ -121,7 +121,7 @@ export const LoginPage: React.FC = () => {
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
                                             className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
-                                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                         </button>
                                     </div>
                                 </div>
@@ -139,7 +139,7 @@ export const LoginPage: React.FC = () => {
                                         variant="link"
                                         className="font-semibold text-slate-200 hover:text-white"
                                         asChild>
-                                            <Link to="/signup">Create one</Link>
+                                        <Link to="/signup">Create one</Link>
                                     </Button>
                                 </div>
                             </CardFooter>

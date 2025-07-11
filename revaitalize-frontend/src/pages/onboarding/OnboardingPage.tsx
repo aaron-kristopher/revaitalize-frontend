@@ -7,10 +7,10 @@ import { CheckCircle2 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import OnboardingOrbs from '@/components/common/OnboardingOrbs';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-    createUserOnboarding, 
-    createUserProblem, 
-    type OnboardingCreatePayload, 
+import {
+    createUserOnboarding,
+    createUserProblem,
+    type OnboardingCreatePayload,
     type UserProblemCreatePayload,
     createSessionRequirement,
     type SessionRequirementCreatePayload
@@ -33,8 +33,8 @@ interface OptionCardProps {
 }
 
 const AuroraStyles = React.memo(() => (
-  <style>
-    {`
+    <style>
+        {`
       @keyframes aurora {
         0% {
           background-position: 0% 50%;
@@ -51,7 +51,7 @@ const AuroraStyles = React.memo(() => (
         animation: aurora 4s ease infinite;
       }
     `}
-  </style>
+    </style>
 ));
 
 interface TooltipSliderProps {
@@ -63,7 +63,7 @@ interface TooltipSliderProps {
 
 const TooltipSlider: React.FC<TooltipSliderProps> = ({ value, min, max, onChange }) => {
     const [isInteracting, setIsInteracting] = useState(false);
-    
+
     const range = max - min;
     const valuePercent = range > 0 ? ((value - min) / range) * 100 : 0;
 
@@ -73,13 +73,13 @@ const TooltipSlider: React.FC<TooltipSliderProps> = ({ value, min, max, onChange
                 className="relative w-full py-5"
                 onPointerDown={() => setIsInteracting(true)}
                 onPointerUp={() => setIsInteracting(false)}
-                onMouseLeave={() => setIsInteracting(false)} 
+                onMouseLeave={() => setIsInteracting(false)}
             >
                 <motion.div
                     className="absolute bottom-full mb-3 flex h-10 w-14 items-center justify-center rounded-lg bg-gradient-to-r from-[#013A63] to-[#0077B6] animate-aurora text-xl font-bold text-white shadow-lg"
                     style={{
                         left: `${valuePercent}%`,
-                        x: '-50%', 
+                        x: '-50%',
                     }}
                     initial={{ opacity: 0, scale: 0.8, y: 10 }}
                     animate={{
@@ -153,9 +153,8 @@ const OptionCard: React.FC<OptionCardProps> = ({ text, isSelected, onSelect }) =
             variants={stepVariants}
             whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
             whileTap={{ scale: 0.98 }}
-            className={`relative w-full p-4 border-2 rounded-xl cursor-pointer transition-colors duration-200 bg-white/50 backdrop-blur-sm ${
-                isSelected ? 'border-[#0077B6]' : 'border-gray-300/50 hover:border-sky-400'
-            }`}
+            className={`relative w-full p-4 border-2 rounded-xl cursor-pointer transition-colors duration-200 bg-white/50 backdrop-blur-sm ${isSelected ? 'border-[#0077B6]' : 'border-gray-300/50 hover:border-sky-400'
+                }`}
         >
             <span className="text-base font-medium text-slate-800">{text}</span>
             <AnimatePresence>
@@ -207,21 +206,21 @@ const OnboardingPage: React.FC = () => {
     const handleSubmit = async () => {
         if (!userId) {
             console.error("User ID is missing!");
-            
+
             return;
         }
-        
+
         const problemMap: Record<string, string> = {
             "Twisting": "torso_rotation",
             "Bending to the Side": "flank_stretch",
-            "Raising an Arm": "hiding_face" 
+            "Raising an Arm": "hiding_face"
         };
 
         // 2. Extract and format the answers
         const goalAnswer = answers[0];
         const painScoreAnswer = parseInt(answers[1], 10);
         const problemAnswer = answers[2];
-        const scheduleAnswer = parseInt(answers[3].split(' ')[0], 10); 
+        const scheduleAnswer = parseInt(answers[3].split(' ')[0], 10);
 
         // 3. Prepare the main onboarding payload
         const onboardingPayload: OnboardingCreatePayload = {
@@ -229,7 +228,7 @@ const OnboardingPage: React.FC = () => {
             pain_score: painScoreAnswer,
             preferred_schedule: scheduleAnswer,
         };
-        
+
         // 4. Prepare the problem area payload
         const problemPayload: UserProblemCreatePayload = {
             // Use the map to get the backend-specific name
@@ -251,13 +250,13 @@ const OnboardingPage: React.FC = () => {
         // NOTE: This is a temporary mapping. In a real app, you might fetch this from the API.
         // Let's assume the Exercise IDs in your DB are: 1=torso_rotation, 2=flank_stretch, 3=hiding_face
         const exerciseIdMap: Record<string, number> = {
-            "torso_rotation": 1,
+            "hiding_face": 1,
             "flank_stretch": 2,
-            "hiding_face": 3
+            "torso_rotation": 3,
         };
 
         const assignedExerciseId = exerciseIdMap[problemPayload.problem_area];
-        
+
         // Prepare the payload for the new API call
         const requirementPayload: SessionRequirementCreatePayload = {
             user_id: parseInt(userId),
@@ -268,7 +267,7 @@ const OnboardingPage: React.FC = () => {
 
         try {
             // Here you would set a loading state if you had one
-            
+
             // 5. Send the data to the backend in parallel
             await Promise.all([
                 createUserOnboarding(parseInt(userId), onboardingPayload),
@@ -281,7 +280,7 @@ const OnboardingPage: React.FC = () => {
 
             // 7. After a delay, redirect to the dashboard
             setTimeout(() => {
-                navigate('/dashboard'); // Or wherever the user should go next
+                navigate('/app'); // Or wherever the user should go next
             }, 3000); // 3-second delay to show the "You're all set!" message
 
         } catch (error) {
@@ -302,7 +301,7 @@ const OnboardingPage: React.FC = () => {
 
             <AnimatePresence>
                 {!isComplete && (
-                    <motion.div 
+                    <motion.div
                         key="onboarding-flow"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -330,7 +329,7 @@ const OnboardingPage: React.FC = () => {
                                     <motion.h1 variants={stepVariants} className="text-3xl font-bold text-[#013A63] mb-6">
                                         {currentQuestionData.question}
                                     </motion.h1>
-                                    
+
                                     {currentQuestionData.type === 'slider' ? (
                                         <motion.div variants={stepVariants}>
                                             <TooltipSlider
@@ -389,7 +388,7 @@ const OnboardingPage: React.FC = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
-            
+
             <AnimatePresence>
                 {isComplete && (
                     <motion.div
@@ -405,10 +404,10 @@ const OnboardingPage: React.FC = () => {
                         >
                             <CheckCircle2 className="h-24 w-24 text-green-500 mx-auto" />
                         </motion.div>
-                        <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, transition:{ delay: 0.8 } }} className="text-3xl font-bold text-[#013A63] mt-6">
+                        <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.8 } }} className="text-3xl font-bold text-[#013A63] mt-6">
                             You're all set!
                         </motion.h1>
-                        <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, transition:{ delay: 0.9 } }} className="text-slate-600 mt-2">
+                        <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.9 } }} className="text-slate-600 mt-2">
                             We're preparing your personalized dashboard.
                         </motion.p>
                     </motion.div>

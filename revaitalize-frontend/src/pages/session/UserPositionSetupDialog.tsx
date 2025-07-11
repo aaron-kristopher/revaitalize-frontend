@@ -9,34 +9,38 @@ import { cn } from "@/lib/utils";
 
 interface UserPositionSetupDialogProps {
   isOpen: boolean;
-  onClose: () => void; // Corrected prop type
-  onReady: () => void; // Corrected prop type
+  onClose: () => void;
+  onReady: () => void;
 }
 
-// A new helper component for the directional arrow
 const DirectionIndicator = ({ direction }: { direction: CalibrationDirection }) => {
   if (!direction) return null;
-  const Arrow = {
+  const ArrowComponent = {
     left: ArrowLeft,
     right: ArrowRight,
     up: ArrowUp,
     down: ArrowDown,
-    forward: ArrowUp, // Use up arrow for "forward"
-    back: ArrowDown,  // Use down arrow for "back"
+    forward: ArrowUp,
+    back: ArrowDown,
   }[direction];
 
-  return <Arrow size={48} className="text-yellow-400" />;
+  return <ArrowComponent size={48} className="text-yellow-400" />;
 };
 
 
 export function UserPositionSetupDialog({ isOpen, onClose, onReady }: UserPositionSetupDialogProps) {
   const dialogWebcamRef = useRef<Webcam | null>(null);
 
+  // The hook is only active when the dialog is open
   const { isPositioned, calibrationStatus, countdown, direction } = usePositionCalibration(dialogWebcamRef, isOpen);
 
+  // This effect is now solely responsible for firing onReady when the countdown finishes.
   useEffect(() => {
     if (countdown === 0) {
-      setTimeout(() => { onReady(); }, 500);
+      // A small delay can prevent a jarring transition
+      setTimeout(() => {
+        onReady();
+      }, 500);
     }
   }, [countdown, onReady]);
 
@@ -52,9 +56,9 @@ export function UserPositionSetupDialog({ isOpen, onClose, onReady }: UserPositi
           </Button>
         </DialogHeader>
 
-        <div className="flex flex-col md:flex-row">
+        <div className="flex flex-col md:flex-row h-full">
 
-          {/* Right Column: Video Feed with Overlays */}
+          {/* Video Feed with Overlays */}
           <div className="md:w-1/2 bg-slate-900 relative min-h-[320px] flex items-center justify-center">
             <Webcam
               ref={dialogWebcamRef}
@@ -63,7 +67,6 @@ export function UserPositionSetupDialog({ isOpen, onClose, onReady }: UserPositi
               videoConstraints={{ facingMode: 'user' }}
             />
 
-            {/* Overlay Container */}
             <div className="absolute inset-0 pointer-events-none">
               {/* Silhouette guide */}
               {!isPositioned && (
@@ -72,7 +75,7 @@ export function UserPositionSetupDialog({ isOpen, onClose, onReady }: UserPositi
                 </div>
               )}
 
-              {/* Large directional indicator */}
+              {/* Directional indicator */}
               {direction && !isPositioned && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="bg-black/40 rounded-full p-4 md:p-6 animate-pulse">

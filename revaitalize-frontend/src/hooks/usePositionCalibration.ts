@@ -1,3 +1,5 @@
+// src/hooks/usePositionCalibration.ts
+
 import { useRef, useState, useEffect, useCallback } from "react";
 import { usePoseLandmarker } from "./usePoseLandmarker";
 import Webcam from "react-webcam";
@@ -16,7 +18,7 @@ export const usePositionCalibration = (webcamRef: React.RefObject<Webcam | null>
   const { poseLandmarker, landmarkerStatus } = usePoseLandmarker();
 
   const [isPositioned, setIsPositioned] = useState<boolean>(false);
-  const [calibrationStatus, setCalibrationStatus] = useState<string>("Initializing...")
+  const [calibrationStatus, setCalibrationStatus] = useState<string>("Initializing...");
   const [countdown, setCountdown] = useState<number | null>(null);
   const [direction, setDirection] = useState<CalibrationDirection>(null);
 
@@ -24,139 +26,141 @@ export const usePositionCalibration = (webcamRef: React.RefObject<Webcam | null>
   const animationFrameIdRef = useRef<number | null>(null);
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-
+  // Constants for calibration
   const MIN_HIP_Y = 0.4;
   const MAX_HIP_Y = 0.8;
-
-  const MIN_HIP_Z = 0.0003;
-  const MAX_HIP_Z = 0.005;
-
-  const MIN_HIP_X = 0.542;
-  const MAX_HIP_X = 0.582;
+  const MIN_HIP_Z = 0.003;
+  const MAX_HIP_Z = 0.05;
+  const MIN_HIP_X = 0.54;
+  const MAX_HIP_X = 0.58;
 
   const checkLoop = useCallback(() => {
+    // Exit condition if the component unmounts or stops checking
+    if (!isChecking) {
+      if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current);
+      return;
+    }
 
-    if (!webcamRef.current?.video || landmarkerStatus !== "ready" || !poseLandmarker) {
-      setCalibrationStatus("Setting up Camera.")
+    // --- More resilient webcam and landmarker check ---
+    if (!webcamRef.current?.video || webcamRef.current.video.readyState < 4) {
+      setCalibrationStatus("Setting up Camera...");
+      animationFrameIdRef.current = requestAnimationFrame(checkLoop);
+      return;
+    }
+    if (landmarkerStatus !== "ready" || !poseLandmarker) {
+      setCalibrationStatus("Loading analysis model...");
       animationFrameIdRef.current = requestAnimationFrame(checkLoop);
       return;
     }
 
-    const video = webcamRef.current?.video as HTMLVideoElement;
-    if (video?.readyState !== 4) {
-      setCalibrationStatus("Webcam is not ready");
-      animationFrameIdRef.current = requestAnimationFrame(checkLoop);
-      return;
-    }
-
-    let newTimestamp: number = performance.now()
-
+    const video = webcamRef.current.video as HTMLVideoElement;
+    let newTimestamp: number = performance.now();
     if (lastTimestampRef.current >= newTimestamp) {
       newTimestamp = lastTimestampRef.current + 1;
     }
-
     lastTimestampRef.current = newTimestamp;
 
-    const result = poseLandmarker?.detectForVideo(video, lastTimestampRef.current);
-
-    if (lastTimestampRef.current % 10 === 0) {
-      animationFrameIdRef.current = requestAnimationFrame(checkLoop);
-      return;
-    }
+    const result = poseLandmarker.detectForVideo(video, newTimestamp);
 
     if (result && result.landmarks && result.landmarks.length > 0) {
       const landmarks = result.landmarks[0];
       const leftHip = landmarks[23];
       const rightHip = landmarks[24];
-      const avgX: number = (leftHip.x + rightHip.x) / 2
-      const avgZ: number = Math.max(leftHip.z, rightHip.z);
 
-      console.log(avgZ);
+      // Ensure hips are visible before proceeding
+      if (leftHip.visibility < 0.5 || rightHip.visibility < 0.5) {
+        setCalibrationStatus("No person detected. Please position yourself in the frame.");
+        setIsPositioned(false);
+        setDirection(null);
+        animationFrameIdRef.current = requestAnimationFrame(checkLoop);
+        return;
+      }
+
+      const avgX: number = (leftHip.x + rightHip.x) / 2;
+      const avgY: number = (leftHip.y + rightHip.y) / 2;
+      const avgZ: number = Math.max(leftHip.z, rightHip.z); // Using max is fine here
 
       let statusMessage: string = "";
       let inPosition: boolean = false;
       let dir: CalibrationDirection = null;
 
-      if (leftHip.y < MIN_HIP_Y || rightHip.y < MIN_HIP_Y) {
-        statusMessage = "Please place yourself higher in the frame.";
-        dir = "up";
-      }
-      else if (leftHip.y > MAX_HIP_Y || rightHip.y > MAX_HIP_Y) {
-        statusMessage = "Please place yourself lower in the frame.";
+      if (avgY < MIN_HIP_Y) {
+        statusMessage = "Please move down a bit.";
         dir = "down";
-      }
-      else if (avgZ < MIN_HIP_Z) {
+      } else if (avgY > MAX_HIP_Y) {
+        statusMessage = "Please move up a bit.";
+        dir = "up";
+      } else if (avgZ < MIN_HIP_Z) {
         statusMessage = "Please move a little bit closer.";
         dir = "forward";
-      }
-      else if (avgZ > MAX_HIP_Z) {
+      } else if (avgZ > MAX_HIP_Z) {
         statusMessage = "Please move a tiny step back.";
         dir = "back";
-      }
-      else if (avgX < MIN_HIP_X) {
-        statusMessage = "Please move a little bit to the left.";
-        dir = "left";
-      }
-      else if (avgX > MAX_HIP_X) {
-        statusMessage = "Please move a little bit to the right.";
-        dir = "right";
-      }
-      else {
+      } else if (avgX < MIN_HIP_X) {
+        statusMessage = "Please move a little to your left.";
+        dir = "left"; // Mirrored camera means user moves right
+      } else if (avgX > MAX_HIP_X) {
+        statusMessage = "Please move a little to your right.";
+        dir = "right"; // Mirrored camera means user moves left
+      } else {
         statusMessage = "Position Correct! Hold still...";
         inPosition = true;
+        dir = null;
       }
 
       setCalibrationStatus(statusMessage);
       setIsPositioned(inPosition);
       setDirection(dir);
-
-      console.log(calibrationStatus)
-      if (inPosition) {
-        return;
-      }
     } else {
-      setCalibrationStatus("No Person Detected")
+      setCalibrationStatus("No person detected. Please position yourself in the frame.");
+      setIsPositioned(false);
+      setDirection(null);
     }
 
     animationFrameIdRef.current = requestAnimationFrame(checkLoop);
+  }, [isChecking, landmarkerStatus, poseLandmarker, webcamRef]);
 
-  }, [isPositioned, landmarkerStatus, poseLandmarker, webcamRef])
-
+  // This effect manages the countdown timer
   useEffect(() => {
-
-    if (isPositioned && !countdown) {
+    // If we are in position and there is no timer running, start one.
+    if (isPositioned && countdownTimerRef.current === null) {
       setCountdown(5);
-
       countdownTimerRef.current = setInterval(() => {
         setCountdown((prev) => {
           if (prev === null || prev <= 1) {
-            clearInterval(countdownTimerRef.current!);
+            if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+            countdownTimerRef.current = null;
             return 0;
           } else {
-            return --prev
+            return prev - 1;
           }
-        })
+        });
       }, 1000);
-    } else if (!isPositioned && countdown) {
-      clearInterval(countdownTimerRef.current!);
+    }
+    // If we move out of position, cancel the timer.
+    else if (!isPositioned && countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+      countdownTimerRef.current = null;
       setCountdown(null);
     }
   }, [isPositioned]);
 
+  // This effect manages the animation frame loop
   useEffect(() => {
-
-    if (landmarkerStatus === "ready" && isChecking) {
+    if (isChecking && landmarkerStatus === "ready") {
       animationFrameIdRef.current = requestAnimationFrame(checkLoop);
+    } else {
+      if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current);
     }
 
     return () => {
-      console.log("Cleaning up dialog setup");
-
       if (animationFrameIdRef.current) {
         cancelAnimationFrame(animationFrameIdRef.current);
       }
-    }
-
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
+      }
+    };
   }, [isChecking, landmarkerStatus, checkLoop]);
 
   return { isPositioned, calibrationStatus, countdown, direction };
