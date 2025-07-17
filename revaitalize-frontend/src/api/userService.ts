@@ -5,6 +5,8 @@ export interface UserCreatePayload {
   password: string;
   age: number;
   address: string;
+  sex: string;
+  contact_number: string;
 }
 
 export interface User {
@@ -14,6 +16,8 @@ export interface User {
   email: string;
   age: number;
   address: string;
+  sex: string;
+  contact_number: string
   profile_picture_url?: string | null;
   onboarding_data?: OnboardingData | null; // Added for fetching preferred_schedule
 }
@@ -219,6 +223,8 @@ export interface UserUpdatePayload {
   email?: string;
   age?: number;
   address?: string;
+  sex?: string;
+  contact_number?: string;
 }
 
 export const updateUser = async (userId: number, userData: UserUpdatePayload): Promise<User> => {

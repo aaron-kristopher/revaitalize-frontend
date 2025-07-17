@@ -17,7 +17,6 @@ import {
   updateSessionRequirement,
   getUserSessionsByTimeRange,
   getExercises,
-  type Exercise,
   getUserProfile
 } from '@/api/userService';
 import { useSidebar } from "@/context/SidebarContext";
@@ -27,7 +26,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/co
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Video, CheckCircle2, AlertTriangle, Play, Square, Pause } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Play, Square, Pause } from 'lucide-react';
 import sidebarLogo from "@/assets/imgs/sidebar.png";
 
 import flankStretchVideo from '@/assets/videos/fs-sitting.mp4';
@@ -66,7 +65,7 @@ function SessionPage() {
   const { user } = useAuth();
   const { setSidebarOpen } = useSidebar();
   const navigate = useNavigate();
-  const { latestPrediction, processFrame, status: poseStatus } = usePoseSequence();
+  const { latestPrediction, processFrame, status } = usePoseSequence();
   const { poseLandmarker, landmarkerStatus } = usePoseLandmarker();
 
   const [sessionState, setSessionState] = useState<'idle' | 'running' | 'paused' | 'in_rest'>('idle');
@@ -90,9 +89,12 @@ function SessionPage() {
   const webcamRef = useRef<Webcam>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const lastTimestampRef = useRef<number>(-1);
+  const videoTimestampRef = useRef<number>(-1);
   const animationFrameIdRef = useRef<number | null>(null);
   const restTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTimestampRef = useRef<number>(0);
+  const fpsRef = useRef<number>(0);
+  const frameCounterRef = useRef<number>(0);
 
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const currentRepPredictions = useRef<number[][]>([]);
@@ -112,62 +114,111 @@ function SessionPage() {
           getExercises()
         ]);
         const req = requirements.find(r => r.id === parseInt(requirementId, 10));
-        if (!req) throw new Error("Session requirement not found for this user.");
+        if (!req)
+          throw new Error("Session requirement not found for this user.");
+
         const exercise = exercises.find(ex => ex.id === req.exercise_id);
-        if (!exercise) throw new Error(`Exercise with ID ${req.exercise_id} not found.`);
+
+        if (!exercise)
+          throw new Error(`Exercise with ID ${req.exercise_id} not found.`);
+
         setExerciseName(exercise.name);
         setActiveRequirement(req);
         setError(null);
+
       } catch (err: any) {
         setError(err.message || "Failed to load session details.");
         console.error(err);
+
       } finally {
         setIsLoading(false);
       }
     };
     fetchSessionData();
+
   }, [user, requirementId]);
 
 
-  const detect = useCallback(() => {
+  const detect = useCallback((timestamp: number) => {
+    frameCounterRef.current++;
+
+    const delta = timestamp - lastTimestampRef.current;
+
+    if (delta >= 1000) {
+      fpsRef.current = frameCounterRef.current;
+      console.clear();
+      console.log("FPS: ", fpsRef.current);
+      console.log("Subsample: ", Math.round(fpsRef.current * 0.10))
+
+      frameCounterRef.current = 0;
+      lastTimestampRef.current = timestamp;
+    }
+
     const webcam = webcamRef.current;
     const canvas = canvasRef.current;
-    if (!poseLandmarker || !webcam || !canvas || typeof webcam.video === "undefined" || webcam.video?.readyState !== 4) return;
+
+    if (!poseLandmarker || !webcam || !canvas || typeof webcam.video === "undefined" || webcam.video?.readyState !== 4)
+      return;
+
     const video = webcam.video as HTMLVideoElement;
     const videoStreamWidth = video.videoWidth;
     const videoStreamHeight = video.videoHeight;
-    if (canvas.width !== videoStreamWidth) canvas.width = videoStreamWidth;
-    if (canvas.height !== videoStreamHeight) canvas.height = videoStreamHeight;
+
+    if (canvas.width !== videoStreamWidth)
+      canvas.width = videoStreamWidth;
+
+    if (canvas.height !== videoStreamHeight)
+      canvas.height = videoStreamHeight;
+
     let newTimestamp = performance.now();
-    if (lastTimestampRef.current >= newTimestamp) newTimestamp = lastTimestampRef.current + 1;
-    lastTimestampRef.current = newTimestamp;
-    const results = poseLandmarker.detectForVideo(video, lastTimestampRef.current);
+
+    if (videoTimestampRef.current >= newTimestamp)
+      newTimestamp = videoTimestampRef.current + 1;
+
+    videoTimestampRef.current = newTimestamp;
+
+    const results = poseLandmarker.detectForVideo(video, videoTimestampRef.current);
     const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+
+    if (!ctx)
+      return;
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
     if (results && results.landmarks && results.landmarks.length > 0) {
       const allLandmarks = results.landmarks[0];
       const exerciseIdentifier = exerciseApiNameToIdentifier[exerciseName] || "hiding_face";
       const exerciseVector = exerciseVectorMap[exerciseIdentifier] || [0, 0, 0];
-      processFrame(exerciseVector, allLandmarks, exerciseIdentifier);
-      if (latestPrediction) currentRepPredictions.current.push(latestPrediction);
+      const fpsSubsample = Math.round(fpsRef.current * 0.10);
+
+      processFrame(exerciseVector, allLandmarks, exerciseIdentifier, fpsSubsample);
+
+      if (latestPrediction)
+        currentRepPredictions.current.push(latestPrediction);
+
       const errorIndices = new Set<number>();
+
       if (latestPrediction?.includes(1)) {
         latestPrediction.forEach((value, index) => {
-          if (value === 1) errorIndices.add(PREDICTION_TO_KEYPOINT_MAP[index]);
+          if (value === 1)
+            errorIndices.add(PREDICTION_TO_KEYPOINT_MAP[index]);
         });
       }
+
       for (const connection of UPPER_BODY_CONNECTIONS) {
         const start = allLandmarks[connection.start];
         const end = allLandmarks[connection.end];
+
         if (start && end) {
           const isError = errorIndices.has(connection.start) || errorIndices.has(connection.end);
+
           ctx.beginPath();
           ctx.moveTo(start.x * canvas.width, start.y * canvas.height);
           ctx.lineTo(end.x * canvas.width, end.y * canvas.height);
           ctx.lineWidth = 4; ctx.strokeStyle = isError ? '#C70039' : '#50C878'; ctx.stroke();
         }
       }
+
       for (const index of UPPER_BODY_INDICES) {
         const landmark = allLandmarks[index];
         if (landmark) {
@@ -181,19 +232,25 @@ function SessionPage() {
   }, [processFrame, poseLandmarker, latestPrediction, exerciseName]);
 
   useEffect(() => {
-    const runAnimation = () => {
+    const runAnimation = (timestamp: number) => {
       if (!isProcessing) {
-        if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current);
+        if (animationFrameIdRef.current)
+          cancelAnimationFrame(animationFrameIdRef.current);
         return;
       }
-      detect();
+
+      detect(timestamp);
       animationFrameIdRef.current = requestAnimationFrame(runAnimation);
     };
+
     if (isProcessing) {
       animationFrameIdRef.current = requestAnimationFrame(runAnimation);
     }
+
     return () => {
-      if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current);
+      if (animationFrameIdRef.current)
+        cancelAnimationFrame(animationFrameIdRef.current);
+
     };
   }, [isProcessing, detect]);
 
@@ -204,22 +261,29 @@ function SessionPage() {
     }
     try {
       const newSession = await startSession(user.id, activeRequirement.exercise_id);
+
       setActiveSessionId(newSession.id);
+
       const newSet = await addSetToSession(user.id, newSession.id, { set_number: 1 });
+
       setActiveSetId(newSet.id);
       setSessionState('running');
       setIsProcessing(true);
       videoRef.current?.play();
+
       console.log(`Started session ${newSession.id}, set ${newSet.id}`);
+
     } catch (err: any) {
       setError("Failed to start a new session on the server.");
       console.error(err);
     }
+
   }, [user, activeRequirement]);
 
   const handleReady = useCallback(() => {
     setIsSetUpDialogOpen(false);
     handleStartSession();
+
   }, [handleStartSession]);
 
   const handleTogglePlay = useCallback(() => {
@@ -227,17 +291,20 @@ function SessionPage() {
       setSessionState('paused');
       setIsProcessing(false);
       videoRef.current?.pause();
+
     } else if (sessionState === 'paused') {
       setSessionState('running');
       setIsProcessing(true);
       videoRef.current?.play();
     }
+
   }, [sessionState]);
 
   const handleEnd = useCallback(async () => {
     setIsProcessing(false);
     setSessionState('idle');
     const currentSessionId = activeSessionIdRef.current;
+
     if (user && currentSessionId) {
       const finalSessionScore = sessionScores.current.length > 0
         ? sessionScores.current.reduce((a, b) => a + b, 0) / sessionScores.current.length : 0;
@@ -245,51 +312,68 @@ function SessionPage() {
         await endSession(user.id, currentSessionId, finalSessionScore);
         console.log("Session ended and saved successfully.");
         await handleProgressionLogic();
+
       } catch (err) {
         console.error("Failed to end session:", err);
         setError("There was a problem saving your session results.");
+
       }
     } else {
       navigate('/app');
     }
+
   }, [user, navigate]);
 
   const handleProgressionLogic = useCallback(async () => {
-    if (!user) return;
+    if (!user)
+      return;
     try {
       const [sessionsThisWeek, profile] = await Promise.all([
         getUserSessionsByTimeRange(user.id, 'this_week'),
         getUserProfile(user.id)
       ]);
       const userSchedule = profile.onboarding_data?.preferred_schedule || 3;
+
       if (sessionsThisWeek.length >= userSchedule) {
         setIsPainModalOpen(true);
+
       } else {
         alert("Session complete! Great work.");
         navigate('/app');
+
       }
     } catch (err) {
       console.error("Failed to fetch data for progression check:", err);
       alert("Session complete! Could not check for progression update.");
       navigate('/app');
     }
+
   }, [user, navigate]);
 
   const handlePainSubmit = useCallback(async () => {
-    if (!user || !activeRequirement) return;
+    if (!user || !activeRequirement)
+      return;
+
     setIsPainModalOpen(false);
+
     let { number_of_reps: newReps, number_of_sets: newSets } = activeRequirement;
+
     const overallScore = sessionScores.current.length > 0
       ? sessionScores.current.reduce((a, b) => a + b, 0) / sessionScores.current.length : 0;
+
     if (overallScore >= 90 && painScore <= 3) {
-      if (newReps < 8) newReps += 1;
-      else if (newSets < 5) {
+      if (newReps < 8) {
+        newReps += 1;
+
+      } else if (newSets < 5) {
         newSets += 1;
         newReps = newSets + 2;
       }
+
     } else if (overallScore < 75 || painScore >= 7) {
       newReps = Math.max(3, newReps - 1);
     }
+
     try {
       await updateSessionRequirement(user.id, activeRequirement.id, { number_of_reps: newReps, number_of_sets: newSets });
       alert(`Progression updated for next week! New goal: ${newSets} sets of ${newReps} reps.`);
@@ -303,24 +387,30 @@ function SessionPage() {
 
   const handleStartNextSet = useCallback(async () => {
     const currentSessionId = activeSessionIdRef.current;
-    if (!user || !currentSessionId) return;
+    if (!user || !currentSessionId)
+      return;
     const nextSetNumber = currentSet + 1;
+
     try {
       const newSet = await addSetToSession(user.id, currentSessionId, { set_number: nextSetNumber });
+
       setActiveSetId(newSet.id);
       setCurrentSet(nextSetNumber);
       setCurrentReps(0);
       setFeedback({ status: 'waiting', text: `Starting Set ${nextSetNumber}` });
       setSessionState('running');
       setIsProcessing(true);
+
       if (videoRef.current) {
         videoRef.current.currentTime = 0;
         videoRef.current.play();
       }
+
     } catch (err) {
       console.error("Failed to start next set:", err);
       setError("Could not start the next set. Please end the session.");
     }
+
   }, [user, currentSet]);
 
   const handleRepComplete = useCallback(async () => {
@@ -328,7 +418,6 @@ function SessionPage() {
 
     let totalErrors = 0;
     for (const prediction of currentRepPredictions.current) {
-      // An error is any frame where the prediction array contains a 1
       if (prediction.some(value => value === 1)) {
         totalErrors++;
       }
@@ -359,11 +448,13 @@ function SessionPage() {
     if (newRepCount >= (activeRequirement?.number_of_reps || 0)) {
       if (currentSet >= (activeRequirement?.number_of_sets || 0)) {
         await handleEnd();
+
       } else {
         setSessionState('in_rest');
         setFeedback({ status: 'waiting', text: 'Set Complete! Take a break.' });
         setRestCountdown(60);
       }
+
     } else {
       setTimeout(() => {
         if (videoRef.current && videoRef.current.paused && sessionState !== 'paused' && sessionState !== 'in_rest') {
@@ -371,15 +462,19 @@ function SessionPage() {
           videoRef.current.play();
           setIsProcessing(true);
         }
+
       }, 1500);
     }
   }, [user, activeSetId, activeRequirement, currentReps, currentSet, handleEnd, sessionState]);
 
   useEffect(() => {
-    if (restCountdown === null) return;
+    if (restCountdown === null)
+      return;
+
     if (restCountdown <= 0) {
       setRestCountdown(null);
       handleStartNextSet();
+
     } else {
       if (restTimerRef.current) clearTimeout(restTimerRef.current);
       restTimerRef.current = setTimeout(() => setRestCountdown(c => (c ? c - 1 : 0)), 1000);

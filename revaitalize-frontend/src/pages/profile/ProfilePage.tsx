@@ -6,11 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { User, Shield, Bell, Camera, Loader2, Check } from 'lucide-react';
 import sidebarLogo from "@/assets/imgs/sidebar.png";
-import profileImage from "@/assets/imgs/aprilhymn.jpg";
 import { useAuth } from '@/context/AuthContext'; // Import our auth hook
 import { updateUser, type UserUpdatePayload } from '@/api/userService'; // Import update function
 import { LogOut } from 'lucide-react';
@@ -24,8 +23,10 @@ const ProfilePage: React.FC = () => {
         first_name: '',
         last_name: '',
         email: '',
-        age: 0,       // <-- ADD THIS
+        age: 0,
         address: '',
+        sex: '',
+        contact_number: '',
     });
 
     const [error, setError] = useState<string | null>(null);
@@ -42,6 +43,8 @@ const ProfilePage: React.FC = () => {
                 email: user.email,
                 age: user.age,
                 address: user.address,
+                sex: user.sex,
+                contact_number: user.contact_number
             });
         }
     }, [user]);

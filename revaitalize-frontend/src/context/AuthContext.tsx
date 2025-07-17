@@ -1,5 +1,5 @@
-import React, { createContext, useState, useContext, type ReactNode } from 'react';
-import { type User } from '../api/userService'; // We reuse the User type we already defined
+import { createContext, useState, useContext, type ReactNode } from 'react';
+import { type User } from '../api/userService';
 
 // 1. Define the shape of the data that our context will hold
 interface AuthContextType {

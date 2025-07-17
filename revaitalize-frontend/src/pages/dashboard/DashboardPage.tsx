@@ -108,9 +108,9 @@ const DashboardPage = () => {
 
       const formattedData = Object.entries(dailyScores).map(([date, data]) => ({
         date,
-        score: data.count > 0 ? data.scores.reduce((a, b) => a + b, 0) / data.count : null,
+        score: data.count > 0 ? Number((data.scores.reduce((a, b) => a + b, 0) / data.count).toFixed(2)) : null,
 
-      })).reverse(); // Reverse to show chronological order
+      }))
 
       console.log("format: ", formattedData);
 
@@ -171,8 +171,10 @@ const DashboardPage = () => {
                   <>
                     <InfoRow label="First Name" value={user.first_name} /> <Separator />
                     <InfoRow label="Last Name" value={user.last_name} /> <Separator />
-                    <InfoRow label="Email" value={user.email} /> <Separator />
                     <InfoRow label="Age" value={String(user.age)} /> <Separator />
+                    <InfoRow label="Sex" value={user.sex || 'Not provided'} /> <Separator />
+                    <InfoRow label="Contact Number" value={user.contact_number || 'Not provided'} />  <Separator />
+                    <InfoRow label="Email" value={user.email} /> <Separator />
                     <InfoRow label="Address" value={user.address || 'Not provided'} />
                   </>
                 ) : (
@@ -206,7 +208,7 @@ const DashboardPage = () => {
                         }}
                       />
                       <Legend />
-                      <Line type="monotone" dataKey="score" stroke="#4f46e5" strokeWidth={2} activeDot={{ r: 8 }} name="Avg. Score" />
+                      <Line type="monotone" dataKey="score" stroke="#0096C7" strokeWidth={2} activeDot={{ r: 8 }} name="Avg. Score" />
                     </LineChart>
                   </ResponsiveContainer>
                 ) : (

@@ -4,7 +4,7 @@ import { Routes, Route } from 'react-router-dom';
 import PublicLayout from './components/layout/PublicLayout';
 import LandingPage from "./pages/landing/LandingPage.tsx";
 import ExercisesOverview from "./pages/exercisesOverview/ExercisesOverview.tsx";
-import ModelsPage from "./pages/models/ModelsPage.tsx"; 
+import ModelsPage from "./pages/models/ModelsPage.tsx";
 import LoginPage from "./pages/login/LoginPage.tsx";
 import SignupPage from "./pages/signup/SignupPage.tsx";
 import OnboardingPage from './pages/onboarding/OnboardingPage.tsx';
@@ -12,9 +12,10 @@ import OnboardingPage from './pages/onboarding/OnboardingPage.tsx';
 import AppLayout from "./components/layout/AppLayout";
 import Sidebar from "./components/common/Sidebar/Sidebar.tsx";
 import MainContentLayout from "./components/layout/MainContentLayout.tsx";
-import DashboardPage from "./pages/dashboard/DashboardPage.tsx"; 
+import DashboardPage from "./pages/dashboard/DashboardPage.tsx";
 import SessionPage from "./pages/session/SessionPage.tsx";
 import ProfilePage from './pages/profile/ProfilePage.tsx';
+import { RecordDatasetPage } from './pages/dataset/RecordDatasetPage.tsx';
 
 
 function App() {
@@ -45,17 +46,14 @@ function App() {
           </AppLayout>
         }
       >
-        {/* The `index` route is the default component shown when the path is exactly "/app" */}
         <Route index element={<DashboardPage />} />
-        
-        {/* Child routes. The `path` is relative to the parent "/app" */}
-        {/* This will correctly match URLs like "/app/session/1", "/app/session/2", etc. */}
-        <Route path="session/:requirementId" element={<SessionPage />} /> 
-  
-        {/* This now correctly renders ProfilePage at `/app/profile` */}
-        <Route path="profile" element={<ProfilePage />} /> 
+
+        <Route path="session/:requirementId" element={<SessionPage />} />
+
+        <Route path="profile" element={<ProfilePage />} />
+        <Route path="dataset" element={<RecordDatasetPage />} />
       </Route>
-      
+
       {/* Optional: Add a catch-all "Not Found" route at the end */}
       <Route path="*" element={<h1>404: Page Not Found</h1>} />
 

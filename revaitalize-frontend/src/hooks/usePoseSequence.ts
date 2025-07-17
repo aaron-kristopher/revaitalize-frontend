@@ -82,10 +82,10 @@ export const usePoseSequence = () => {
     }
   }, [])
 
-  const processFrame = useCallback(async (ohe: number[], landmarks: BlazePoseLandmarks[], exerciseName: string) => {
+  const processFrame = useCallback(async (ohe: number[], landmarks: BlazePoseLandmarks[], exerciseName: string, fpsSubsample: number) => {
     frameCount.current++;
 
-    if (frameCount.current % 3 !== 0) {
+    if (frameCount.current % fpsSubsample !== 0) {
       return;
     }
 

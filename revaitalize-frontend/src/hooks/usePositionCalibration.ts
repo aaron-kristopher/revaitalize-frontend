@@ -138,10 +138,13 @@ export const usePositionCalibration = (webcamRef: React.RefObject<Webcam | null>
       }, 1000);
     }
     // If we move out of position, cancel the timer.
-    else if (!isPositioned && countdownTimerRef.current) {
-      clearInterval(countdownTimerRef.current);
-      countdownTimerRef.current = null;
-      setCountdown(null);
+    else if (!isPositioned) {
+
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
+        countdownTimerRef.current = null;
+        setCountdown(null);
+      }
     }
   }, [isPositioned]);
 

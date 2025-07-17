@@ -1,11 +1,11 @@
 import { NavLink } from 'react-router-dom';
-import { Home, User, BarChart } from 'lucide-react';
+import { Home, User, BarChart, Camera } from 'lucide-react';
 import { type LucideIcon } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
-import React, { useState, useEffect } from 'react'; // Add hooks
+import { useState, useEffect } from 'react'; // Add hooks
 import { useAuth } from '@/context/AuthContext'; // Import useAuth
-import { getUserSessionRequirements } from '@/api/userService'; 
+import { getUserSessionRequirements } from '@/api/userService';
 
 
 interface NavItem {
@@ -14,12 +14,6 @@ interface NavItem {
   Icon: LucideIcon;
 }
 
-
-const navItems: NavItem[] = [
-  { to: '/app', title: 'Dashboard', Icon: Home },
-  { to: '/app/profile', title: 'Profile', Icon: User },
-  { to: '/app/session', title: 'Session', Icon: BarChart },
-];
 
 interface RouteSelectProps {
   open: boolean;
@@ -52,6 +46,7 @@ function RouteSelect({ open }: RouteSelectProps) {
   const navItems: NavItem[] = [
     { to: '/app', title: 'Dashboard', Icon: Home },
     { to: '/app/profile', title: 'Profile', Icon: User },
+    { to: '/app/dataset', title: 'Dataset', Icon: Camera },
     ...(sessionLink ? [{ to: sessionLink, title: 'Session', Icon: BarChart }] : [])
   ];
 
