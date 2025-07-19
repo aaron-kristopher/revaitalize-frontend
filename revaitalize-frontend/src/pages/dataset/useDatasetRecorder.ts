@@ -1,265 +1,196 @@
-import React, { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import Webcam from "react-webcam";
 import { DrawingUtils, PoseLandmarker } from "@mediapipe/tasks-vision";
-
 import { useAuth } from "@/context/AuthContext";
-import { usePoseLandmarker } from "@/hooks/usePoseLandmarker"
+import { usePoseLandmarker } from "@/hooks/usePoseLandmarker";
 
 const KEYPOINT_MAPPING = [
-	"Nose",
-	"Left_eye_inner",
-	"Left_eye",
-	"Left_eye_outer",
-	"Right_eye_inner",
-	"Right_eye",
-	"Right_eye_outer",
-	"Left_ear",
-	"Right_ear",
-	"Left_mouth",
-	"Right_mouth",
-	"Left_shoulder",
-	"Right_shoulder",
-	"Left_elbow",
-	"Right_elbow",
-	"Left_wrist",
-	"Right_wrist",
-	"Left_pinky",
-	"Right_pinky",
-	"Left_index",
-	"Right_index",
-	"Left_thumb",
-	"Right_thumb",
-	"Left_hip",
-	"Right_hip",
-	"Left_knee",
-	"Right_knee",
-	"Left_ankle",
-	"Right_ankle",
-	"Left_heel",
-	"Right_heel",
-	"Left_foot_index",
-	"Right_foot_index",
-]
+	"Nose", "Left_eye_inner", "Left_eye", "Left_eye_outer", "Right_eye_inner", "Right_eye", "Right_eye_outer",
+	"Left_ear", "Right_ear", "Mouth_left", "Mouth_right", "Left_shoulder", "Right_shoulder", "Left_elbow",
+	"Right_elbow", "Left_wrist", "Right_wrist", "Left_pinky", "Right_pinky", "Left_index", "Right_index",
+	"Left_thumb", "Right_thumb", "Left_hip", "Right_hip", "Left_knee", "Right_knee", "Left_ankle", "Right_ankle",
+	"Left_heel", "Right_heel", "Left_foot_index", "Right_foot_index",
+];
 
 export const useUpdateDatasetRecorder = (
 	videoGuideRef: React.RefObject<HTMLVideoElement | null>,
 	exercise: string,
 	category: string,
 ) => {
-
+	const [statusMessage, setStatusMessage] = useState<string>("Ready to record");
 	const [isRecording, setIsRecording] = useState<boolean>(false);
+	const isRecordingRef = useRef<boolean>(isRecording);
 
-	const animationFrameIdRef = useRef<number>(0);
+	// --- REFACTORED: This is now a counter for actual video frames ---
+	const videoFrameCounterRef = useRef<number>(0);
+	const subsampleRateRef = useRef<number>(3); // Default subsample every 3rd frame
 
+	const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+	const recordedChunksRef = useRef<Blob[]>([]);
+	const currentFilenameRef = useRef<string>("");
 
-	// Refs for monitoring fps and subsampling frames
-	const lastTimestampRef = useRef<number>(performance.now());
-	const totalFrameCountRef = useRef<number>(0);
-	const frameCountRef = useRef<number>(0);
-	const fpsRef = useRef<number>(0);
-	const subsampleFrameRef = useRef<number>(0);
-	const seconds = useRef<number>(0);
+	const ws = useRef<WebSocket | null>(null);
+	const webcamRef = useRef<Webcam | null>(null);
+	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-	const ws = useRef<WebSocket | null>(null)
-
-	const webcamRef = useRef<Webcam | null>(null)
-	const canvasRef = useRef<HTMLCanvasElement | null>(null)
-
-	const { poseLandmarker, landmarkerStatus } = usePoseLandmarker();
+	const { poseLandmarker } = usePoseLandmarker();
 	const { user } = useAuth();
 
-	const detect = useCallback((timestamp: number) => {
-		frameCountRef.current++;
+	useEffect(() => {
+		isRecordingRef.current = isRecording
+	}, [isRecording]);
 
-		const delta = timestamp - lastTimestampRef.current;
+	// This is the core detection logic, now called by the video frame callback
+	const runDetectionOnVideoFrame = useCallback((now: DOMHighResTimeStamp, metadata: VideoFrameCallbackMetadata) => {
 
-		if (delta >= 1000) {
-			fpsRef.current = frameCountRef.current
-			subsampleFrameRef.current = Math.round(fpsRef.current * 0.10);
-			console.log("FPS: ", fpsRef.current);
-			console.log("Subsample: ", subsampleFrameRef.current);
+		if (!isRecordingRef.current)
+			return;
 
-			frameCountRef.current = 0;
-			lastTimestampRef.current = timestamp;
-			seconds.current++;
-		}
+		videoFrameCounterRef.current++;
 
 		const webcam = webcamRef.current;
 		const canvas = canvasRef.current;
 		const videoGuide = videoGuideRef.current;
 
-		if (!poseLandmarker || !webcam || !canvas || !videoGuide || typeof webcam.video === "undefined" || webcam.video?.readyState !== 4) {
-			return;
-		}
-
-		const video = webcam.video as HTMLVideoElement;
-		const videoStreamWidth = video.videoWidth;
-		const videoStreamHeight = video.videoHeight;
-
-		if (canvas.width !== videoStreamWidth)
-			canvas.width = videoStreamWidth
-
-		if (canvas.height !== videoStreamHeight)
-			canvas.height = videoStreamHeight
-
-		const results = poseLandmarker.detectForVideo(video, performance.now());
-		const ctx = canvas.getContext("2d");
-
-		if (!ctx)
+		if (!webcam || !canvas || !poseLandmarker)
 			return;
 
-		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		if (videoFrameCounterRef.current % subsampleRateRef.current === 0) {
+			const video = webcam.video as HTMLVideoElement;
+			const videoStreamWidth = video.videoWidth;
+			const videoStreamHeight = video.videoHeight;
 
-		if (!poseLandmarker) {
-			console.error("Bro is empty")
-		}
+			if (canvas.width !== videoStreamWidth) canvas.width = videoStreamWidth;
+			if (canvas.height !== videoStreamHeight) canvas.height = videoStreamHeight;
 
-		if (!results) {
-			console.error("We got nothing bruv")
-		}
+			const results = poseLandmarker.detectForVideo(video, now);
+			const ctx = canvas.getContext("2d");
+			if (!ctx) return;
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-		if (!results.landmarks) {
-			console.error("Shit! got no landmarks")
-		}
+			if (results.landmarks?.length > 0) {
+				const landmarks = results.landmarks[0];
+				const drawingUtil = new DrawingUtils(ctx);
 
-		if (results.landmarks.length <= 0) {
-			console.error("Landmarks' empty bro")
-		}
+				if (ws.current?.readyState === WebSocket.OPEN) {
+					const currentFrameTimestamp = videoGuide?.currentTime.toFixed(3);
+					const landmarkData: { [key: string]: number[] } = {};
 
-		if (results && results.landmarks && results.landmarks.length > 0) {
+					landmarks.forEach((landmark, index) => {
+						landmarkData[KEYPOINT_MAPPING[index]] = [landmark.x, landmark.y, landmark.z];
+					});
 
-			const landmarks = results.landmarks[0];
-			const drawingUtil = new DrawingUtils(ctx);
+					ws.current.send(JSON.stringify({
+						event: "frame",
+						payload: { timestamp: currentFrameTimestamp, landmarks: landmarkData },
+					}));
+				}
 
-			if (!ws.current) {
-				console.log("Websocket empty");
-			} else if (ws.current.readyState !== WebSocket.OPEN) {
-				console.log("WS aint open")
+				drawingUtil.drawLandmarks(landmarks, { color: "lightblue" });
+				drawingUtil.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, { color: "yellow" });
+
 			}
-
-			if (ws.current &&
-				ws.current.readyState === WebSocket.OPEN &&
-				frameCountRef.current % subsampleFrameRef.current === 0) {
-
-				totalFrameCountRef.current++;
-				const currentFrameTimestamp = `${totalFrameCountRef.current}.0`
-
-				const landmarkData: { [key: string]: number[] } = {}
-
-				landmarks.forEach((landmark, index) => {
-					const key = KEYPOINT_MAPPING[index];
-					landmarkData[key] = [landmark.x, landmark.y, landmark.z]
-				})
-
-				const framePayload = {
-					event: "frame",
-					payload: {
-						timestamp: currentFrameTimestamp,
-						landmarks: landmarkData,
-					}
-				};
-
-				ws.current.send(JSON.stringify(framePayload))
-			}
-
-			drawingUtil.drawLandmarks(landmarks, {
-				color: "lightblue",
-				lineWidth: 2,
-			})
-
-			drawingUtil.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, {
-				color: "yellow",
-				lineWidth: 2,
-			})
 		}
 
-	}, [poseLandmarker, webcamRef, canvasRef, videoGuideRef, ws]);
-
-	useEffect(() => {
-		const runAnimation = (timestamp: number) => {
-			console.log("INFO:\tRunning animation")
-			console.log("INFO:\tRecording Status: ", isRecording)
-			if (!isRecording)
-				return;
-
-			detect(timestamp);
-			animationFrameIdRef.current = requestAnimationFrame(runAnimation);
+		if (isRecordingRef.current && webcam.video) {
+			(webcam.video as any).requestVideoFrameCallback(runDetectionOnVideoFrame);
 		}
+	}, [poseLandmarker, videoGuideRef]);
 
-		if (isRecording)
-			animationFrameIdRef.current = requestAnimationFrame(runAnimation);
+	const uploadVideoAndFinalize = async (videoBlob: Blob) => {
+		setStatusMessage("Uploading video file...");
+		const formData = new FormData();
+		formData.append("video_file", videoBlob);
+		formData.append("filename", currentFilenameRef.current);
+		formData.append("exercise", exercise);
+		formData.append("category", category);
 
-		return () => {
-			if (animationFrameIdRef.current)
-				cancelAnimationFrame(animationFrameIdRef.current)
+		try {
+			const response = await fetch("http://127.0.0.1:8001/predict/api/upload-video-and-finalize", {
+				method: "POST",
+				body: formData,
+			});
+			const result = await response.json();
+			if (!response.ok) throw new Error(result.detail || "Upload and finalization failed");
+			setStatusMessage("Dataset entry created successfully!");
+			alert("Dataset entry created successfully!");
+		} catch (error) {
+			setStatusMessage(`Error: ${error.message}`);
+			alert(`Error: ${error.message}`);
 		}
-
-	}, [isRecording, detect]);
-
+	};
 
 	const handleEndRecording = useCallback(() => {
-		if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-			console.log("Sending 'end' message and closing WebSocket.");
-			ws.current.send(JSON.stringify({ event: "end", payload: {} }))
+		if (mediaRecorderRef.current?.state === "recording") {
+			mediaRecorderRef.current.stop();
 		}
 		setIsRecording(false);
 	}, []);
 
 	const handleStartRecording = useCallback(() => {
-		if (isRecording || !user)
+		const webcam = webcamRef.current;
+
+		if (isRecording || !user || !webcam?.stream) {
 			return;
+		}
 
 		setIsRecording(true);
-		totalFrameCountRef.current = 0;
+		setStatusMessage("Initializing...");
+
 		const uniqueId = Date.now().toString().slice(5, 10);
-		const filename = `G4-BP-${exercise}-${user.first_name}-${uniqueId}.json`
+		currentFilenameRef.current = `G4-BP-${exercise}-${user.first_name}-${uniqueId}.json`;
+
+		// Reset counters and data stores
+		videoFrameCounterRef.current = 0;
+		recordedChunksRef.current = [];
+
+		// Setup MediaRecorder
+		const stream = webcam.stream as MediaStream;
+		mediaRecorderRef.current = new MediaRecorder(stream, { mimeType: "video/webm" });
+		mediaRecorderRef.current.ondataavailable = (e) => {
+			if (e.data.size > 0) recordedChunksRef.current.push(e.data);
+		};
+		mediaRecorderRef.current.onstop = () => {
+			const videoBlob = new Blob(recordedChunksRef.current, { type: "video/webm" });
+			uploadVideoAndFinalize(videoBlob);
+		};
+		mediaRecorderRef.current.start();
 
 		ws.current = new WebSocket("ws://127.0.0.1:8001/predict/api/ws/create-dataset");
 		ws.current.onopen = () => {
-			console.log("WebSocket connection established.");
-			const configPayload = {
+			console.log("WebSocket connected.");
+			setStatusMessage("Streaming landmark data...");
+			ws.current?.send(JSON.stringify({
 				event: "config",
-				payload: {
-					filename: filename,
-					exercise: exercise,
-					category: category,
-				},
-			};
+				payload: { filename: currentFilenameRef.current, exercise, category },
+			}));
 
-			ws.current?.send(JSON.stringify(configPayload));
-
-			const videoGuide = videoGuideRef.current;
-			if (videoGuide) {
-				videoGuide.currentTime = 0;
-				videoGuide.play();
-				videoGuide.onended = handleEndRecording;
+			if (videoGuideRef.current) {
+				videoGuideRef.current.currentTime = 0;
+				videoGuideRef.current.play();
+				videoGuideRef.current.onended = handleEndRecording;
+			}
+			if (webcam.video) {
+				(webcam.video as any).requestVideoFrameCallback(runDetectionOnVideoFrame);
 			}
 		};
 
 		ws.current.onmessage = (event) => {
 			const data = JSON.parse(event.data);
-			console.log("Message from server: ", data);
-			console.log("Elapsed time: ", seconds.current);
-
-			if (data.status === "success") {
-				alert(`Dataset entry saved successfully: ${filename}`);
-			} else {
-				alert(`Error saving dataset: ${data.message}`);
-			}
+			console.log("Server message:", data);
+			setStatusMessage(data.message);
 		};
 
-		ws.current.onerror = (error) => {
-			console.error("WebSocket Error: ", error);
-			alert("Connection to the recording service failed.");
-			setIsRecording(false);
+		ws.current.onerror = (e) => {
+			console.error("WebSocket Error:", e);
+			setStatusMessage("Error: Connection lost.");
 		};
 
 		ws.current.onclose = () => {
-			console.log("WebSocket connection closed.");
-			setIsRecording(false);
+			console.log("WebSocket closed.");
 		};
-	}, [isRecording, user, exercise, category, videoGuideRef, handleEndRecording]);
 
+	}, [isRecording, user, exercise, category, videoGuideRef, handleEndRecording, runDetectionOnVideoFrame]);
 
-	return { handleStartRecording, isRecording, webcamRef, canvasRef };
-}
+	return { handleStartRecording, isRecording, statusMessage, webcamRef, canvasRef };
+};

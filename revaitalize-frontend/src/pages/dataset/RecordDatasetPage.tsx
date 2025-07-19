@@ -47,7 +47,7 @@ export const RecordDatasetPage = () => {
 
   const videoGuideRef = useRef<HTMLVideoElement | null>(null)
 
-  const { handleStartRecording, isRecording, webcamRef, canvasRef } = useUpdateDatasetRecorder(videoGuideRef, exerciseValue, categoryValue);
+  const { handleStartRecording, isRecording, statusMessage, webcamRef, canvasRef } = useUpdateDatasetRecorder(videoGuideRef, exerciseValue, categoryValue);
   const { user } = useAuth();
 
   useEffect(() => {
