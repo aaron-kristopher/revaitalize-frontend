@@ -42,8 +42,6 @@ export const LoginPage: React.FC = () => {
 
             const data = await loginUser(formData);
 
-            // On success, call the login function from our AuthContext
-            // This will update the global state and save the token
             login(data.user, data.access_token);
 
             // Redirect to the dashboard

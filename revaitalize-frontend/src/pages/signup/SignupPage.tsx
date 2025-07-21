@@ -13,8 +13,12 @@ import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Mail, Phone } from "lucide-react";
 import BackgroundOrbs from "@/components/common/BackgroundOrbs";
 import { createUser, type UserCreatePayload } from "../../api/userService";
+import { useAuth } from "@/context/AuthContext";
+import { loginUser } from "@/api/authService";
 
 export const SignupPage: React.FC = () => {
+    const { login } = useAuth();
+
     const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState<boolean>(false);
     const [agreedToTerms, setAgreedToTerms] = useState<boolean>(false);
@@ -63,7 +67,15 @@ export const SignupPage: React.FC = () => {
             setIsLoading(true);
             setError(null);
 
-            const newUser = await createUser(userData);
+            const newUser = await createUser(userData)
+
+            const formData = new FormData()
+            formData.append("username", email)
+            formData.append("password", password)
+
+            const data = await loginUser(formData);
+
+            login(data.user, data.access_token)
 
             alert("Account created successfully! Proceeding to onboarding.");
             navigate(`/onboarding/${newUser.id}`);
@@ -152,6 +164,8 @@ export const SignupPage: React.FC = () => {
                                     <Input
                                         id="contactNumber"
                                         type="tel"
+                                        pattern=".{11}"
+                                        title="Contact number must be 11 digits long"
                                         required
                                         value={contactNumber}
                                         onChange={(e) => setContactNumber(e.target.value)}
@@ -249,8 +263,8 @@ export const SignupPage: React.FC = () => {
                         <Button
                             type="submit"
                             className={`h-12 w-full rounded-lg bg-gradient-to-r from-blue-800 to-sky-500 font-bold text-white shadow-lg transition-all ${agreedToTerms
-                                    ? 'hover:from-sky-400 hover:to-blue-500'
-                                    : 'cursor-not-allowed opacity-60'
+                                ? 'hover:from-sky-400 hover:to-blue-500'
+                                : 'cursor-not-allowed opacity-60'
                                 }`}
                             disabled={!agreedToTerms || isLoading}>
                             {isLoading ? 'Creating Account...' : 'Create Account'}

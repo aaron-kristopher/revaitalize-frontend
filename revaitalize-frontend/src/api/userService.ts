@@ -366,3 +366,19 @@ export const updateSessionRequirement = async (
   return response.json();
 };
 
+export const getUserMe = async (token: string): Promise<User> => {
+  const response = await fetch(`${API_BASE_URL}/users/me`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    }
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.detail || "Failed to fetch user data with token");
+  }
+
+  return response.json();
+}
