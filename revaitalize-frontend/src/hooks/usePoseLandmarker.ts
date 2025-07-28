@@ -9,7 +9,7 @@ const STATUS = {
   CLOSING: "closing",
 } as const;
 
-type LandmarkerStatus = typeof STATUS[keyof typeof STATUS];
+export type LandmarkerStatus = typeof STATUS[keyof typeof STATUS];
 
 export const usePoseLandmarker = () => {
   const [landmarkerStatus, setLandmarkerStatus] = useState<LandmarkerStatus>(STATUS.IDLE);

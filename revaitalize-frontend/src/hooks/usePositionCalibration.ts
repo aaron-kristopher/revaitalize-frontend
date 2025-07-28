@@ -1,7 +1,5 @@
-// src/hooks/usePositionCalibration.ts
-
 import { useRef, useState, useEffect, useCallback } from "react";
-import { usePoseLandmarker } from "./usePoseLandmarker";
+import { useSharedPoseLandmarker } from "@/context/PoseLandmarkerContext";
 import Webcam from "react-webcam";
 
 export type CalibrationDirection = 'left' | 'right' | 'up' | 'down' | 'forward' | 'back' | null;
@@ -15,7 +13,7 @@ export interface CalibrationResult {
 
 export const usePositionCalibration = (webcamRef: React.RefObject<Webcam | null>, isChecking: boolean): CalibrationResult => {
 
-  const { poseLandmarker, landmarkerStatus } = usePoseLandmarker();
+  const { poseLandmarker, landmarkerStatus } = useSharedPoseLandmarker();
 
   const [isPositioned, setIsPositioned] = useState<boolean>(false);
   const [calibrationStatus, setCalibrationStatus] = useState<string>("Initializing...");
@@ -37,7 +35,9 @@ export const usePositionCalibration = (webcamRef: React.RefObject<Webcam | null>
   const checkLoop = useCallback(() => {
     // Exit condition if the component unmounts or stops checking
     if (!isChecking) {
-      if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current);
+      if (animationFrameIdRef.current)
+        cancelAnimationFrame(animationFrameIdRef.current);
+
       return;
     }
 
@@ -120,15 +120,19 @@ export const usePositionCalibration = (webcamRef: React.RefObject<Webcam | null>
     animationFrameIdRef.current = requestAnimationFrame(checkLoop);
   }, [isChecking, landmarkerStatus, poseLandmarker, webcamRef]);
 
+  const [isLandmarkerClosed, setIsLandmarkerClosed] = useState<boolean>(false);
+  const isLandmarkerClosedRef = useRef<boolean>(isLandmarkerClosed);
+
   // This effect manages the countdown timer
   useEffect(() => {
     // If we are in position and there is no timer running, start one.
     if (isPositioned && countdownTimerRef.current === null) {
-      setCountdown(5);
+      setCountdown(2);
       countdownTimerRef.current = setInterval(() => {
         setCountdown((prev) => {
           if (prev === null || prev <= 1) {
-            if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+            if (countdownTimerRef.current)
+              clearInterval(countdownTimerRef.current);
             countdownTimerRef.current = null;
             return 0;
           } else {
@@ -167,4 +171,5 @@ export const usePositionCalibration = (webcamRef: React.RefObject<Webcam | null>
   }, [isChecking, landmarkerStatus, checkLoop]);
 
   return { isPositioned, calibrationStatus, countdown, direction };
+
 }

@@ -1,11 +1,19 @@
-// src/pages/Session/SessionPage.tsx
-
 import { useState, useEffect, useRef, useCallback } from 'react';
-import Webcam from "react-webcam";
-import { usePoseSequence } from "../../hooks/usePoseSequence";
-import { usePoseLandmarker } from "../../hooks/usePoseLandmarker.ts";
-import UserPositionSetupDialog from './UserPositionSetupDialog.tsx';
 import { useParams, useNavigate } from 'react-router-dom';
+import Webcam from "react-webcam";
+
+import { useSidebar } from "@/context/SidebarContext";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { CheckCircle2, AlertTriangle, Play, Square, Pause } from 'lucide-react';
+
+import { usePoseSequence } from "../../hooks/usePoseSequence";
+import UserPositionSetupDialog from './UserPositionSetupDialog.tsx';
+import { useSharedPoseLandmarker } from '@/context/PoseLandmarkerContext.tsx';
 import { useAuth } from '@/context/AuthContext';
 import {
   getUserSessionRequirements,
@@ -19,28 +27,35 @@ import {
   getExercises,
   getUserProfile
 } from '@/api/userService';
-import { useSidebar } from "@/context/SidebarContext";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { CheckCircle2, AlertTriangle, Play, Square, Pause } from 'lucide-react';
-import sidebarLogo from "@/assets/imgs/sidebar.png";
 
+import sidebarLogo from "@/assets/imgs/sidebar.png";
 import flankStretchVideo from '@/assets/videos/fs-sitting.mp4';
 import hidingFaceVideo from '@/assets/videos/hf-sitting.mp4';
 import torsoRotationVideo from '@/assets/videos/tr-sitting.mp4';
 
+
 const UPPER_BODY_CONNECTIONS = [
-  { start: 11, end: 12, name: 'shoulders' }, { start: 11, end: 13, name: 'left_upper_arm' }, { start: 13, end: 15, name: 'left_lower_arm' },
-  { start: 12, end: 14, name: 'right_upper_arm' }, { start: 14, end: 16, name: 'right_lower_arm' }, { start: 11, end: 23, name: 'left_torso' },
-  { start: 12, end: 24, name: 'right_torso' }, { start: 23, end: 24, name: 'hips' }
+  { start: 11, end: 12, name: 'shoulders' },
+  { start: 11, end: 13, name: 'left_upper_arm' },
+  { start: 13, end: 15, name: 'left_lower_arm' },
+  { start: 12, end: 14, name: 'right_upper_arm' },
+  { start: 14, end: 16, name: 'right_lower_arm' },
+  { start: 11, end: 23, name: 'left_torso' },
+  { start: 12, end: 24, name: 'right_torso' },
+  { start: 23, end: 24, name: 'hips' }
 ];
-const PREDICTION_TO_KEYPOINT_MAP: { [key: number]: number } = { 0: 11, 1: 12, 2: 13, 3: 14, 4: 15, 5: 16 };
+
+const PREDICTION_TO_KEYPOINT_MAP: { [key: number]: number } = {
+  0: 11,
+  1: 12,
+  2: 13,
+  3: 14,
+  4: 15,
+  5: 16
+};
+
 const UPPER_BODY_INDICES = [11, 12, 13, 14, 15, 16, 23, 24];
-type FeedbackStatus = 'waiting' | 'correct' | 'incorrect';
+type FeedbackStatus = "waiting" | "correct" | "incorrect";
 
 const videoMap: { [key: string]: string } = {
   "Flank Stretch": flankStretchVideo,
@@ -64,12 +79,12 @@ function SessionPage() {
   const { requirementId } = useParams<{ requirementId: string }>();
   const { user } = useAuth();
   const { setSidebarOpen } = useSidebar();
-  const navigate = useNavigate();
   const { latestPrediction, processFrame, status } = usePoseSequence();
-  const { poseLandmarker, landmarkerStatus } = usePoseLandmarker();
+  const { poseLandmarker, landmarkerStatus } = useSharedPoseLandmarker();
+  const navigate = useNavigate();
 
-  const [sessionState, setSessionState] = useState<'idle' | 'running' | 'paused' | 'in_rest'>('idle');
-  const [feedback, setFeedback] = useState<{ status: FeedbackStatus; text: string }>({ status: 'waiting', text: 'Align in Camera to Start' });
+  const [sessionState, setSessionState] = useState<"idle" | "running" | "paused" | "in_rest">("idle");
+  const [feedback, setFeedback] = useState<{ status: FeedbackStatus; text: string }>({ status: "waiting", text: "Align in Camera to Start" });
   const [currentReps, setCurrentReps] = useState(0);
   const [currentSet, setCurrentSet] = useState(1);
   const [isSetUpDialogOpen, setIsSetUpDialogOpen] = useState<boolean>(true);
@@ -77,36 +92,52 @@ function SessionPage() {
   const [painScore, setPainScore] = useState<number>(5);
 
   const [activeRequirement, setActiveRequirement] = useState<SessionRequirement | null>(null);
-  const [exerciseName, setExerciseName] = useState<string>('Loading Exercise...');
+  const [exerciseName, setExerciseName] = useState<string>("Loading Exercise...");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
   const [activeSetId, setActiveSetId] = useState<number | null>(null);
   const [restCountdown, setRestCountdown] = useState<number | null>(null);
-  const activeSessionIdRef = useRef<number | null>(null);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [isReadyToStart, setIsReadyToStart] = useState<boolean>(false);
+  const [isUserPositioned, setIsUserPositioned] = useState<boolean>(false);
 
   const webcamRef = useRef<Webcam>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const videoTimestampRef = useRef<number>(-1);
   const animationFrameIdRef = useRef<number | null>(null);
   const restTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const lastTimestampRef = useRef<number>(0);
-  const fpsRef = useRef<number>(0);
-  const frameCounterRef = useRef<number>(0);
-
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const videoFrameCountRef = useRef<number>(0);
+  const activeSessionIdRef = useRef<number | null>(null);
+  const isProcessingRef = useRef<boolean>(isProcessing);
   const currentRepPredictions = useRef<number[][]>([]);
   const sessionScores = useRef<number[]>([]);
+
+  useEffect(() => {
+    isProcessingRef.current = isProcessing;
+  }, [isProcessing]);
 
   useEffect(() => {
     activeSessionIdRef.current = activeSessionId;
   }, [activeSessionId]);
 
   useEffect(() => {
+    if (!isLoading && landmarkerStatus === "ready") {
+      setIsReadyToStart(true);
+      console.log("System is ready to start");
+
+    } else {
+      setIsReadyToStart(false);
+    }
+  }, [isLoading, landmarkerStatus])
+
+  useEffect(() => {
     const fetchSessionData = async () => {
-      if (!user || !requirementId) return;
+
+      if (!user || !requirementId)
+        return;
+
       try {
         setIsLoading(true);
         const [requirements, exercises] = await Promise.all([
@@ -138,26 +169,23 @@ function SessionPage() {
 
   }, [user, requirementId]);
 
-
-  const detect = useCallback((timestamp: number) => {
-    frameCounterRef.current++;
-
-    const delta = timestamp - lastTimestampRef.current;
-
-    if (delta >= 1000) {
-      fpsRef.current = frameCounterRef.current;
-      console.clear();
-      console.log("FPS: ", fpsRef.current);
-      console.log("Subsample: ", Math.round(fpsRef.current * 0.10))
-
-      frameCounterRef.current = 0;
-      lastTimestampRef.current = timestamp;
-    }
+  const runLiveDetection = useCallback(() => {
+    // console.log("Running Live Detection")
+    videoFrameCountRef.current++;
 
     const webcam = webcamRef.current;
     const canvas = canvasRef.current;
 
-    if (!poseLandmarker || !webcam || !canvas || typeof webcam.video === "undefined" || webcam.video?.readyState !== 4)
+    if (!poseLandmarker)
+      console.error("Error: PoseLandmarker has not been initialized")
+
+    if (!webcam || webcam?.video?.readyState !== 4 || typeof webcam.video === "undefined")
+      console.error("Webcam is not ready")
+
+    if (!canvas)
+      console.error("Canvas is not ready")
+
+    if (!poseLandmarker || !webcam || !canvas || typeof webcam.video === "undefined" || webcam?.video?.readyState !== 4)
       return;
 
     const video = webcam.video as HTMLVideoElement;
@@ -170,14 +198,7 @@ function SessionPage() {
     if (canvas.height !== videoStreamHeight)
       canvas.height = videoStreamHeight;
 
-    let newTimestamp = performance.now();
-
-    if (videoTimestampRef.current >= newTimestamp)
-      newTimestamp = videoTimestampRef.current + 1;
-
-    videoTimestampRef.current = newTimestamp;
-
-    const results = poseLandmarker.detectForVideo(video, videoTimestampRef.current);
+    const results = poseLandmarker.detectForVideo(video, performance.now());
     const ctx = canvas.getContext("2d");
 
     if (!ctx)
@@ -185,11 +206,14 @@ function SessionPage() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    if (results && results.landmarks && results.landmarks.length > 0) {
+    // console.log("Results: ", results)
+
+    if (results.landmarks?.length > 0) {
       const allLandmarks = results.landmarks[0];
-      const exerciseIdentifier = exerciseApiNameToIdentifier[exerciseName] || "hiding_face";
-      const exerciseVector = exerciseVectorMap[exerciseIdentifier] || [0, 0, 0];
-      const fpsSubsample = Math.round(fpsRef.current * 0.10);
+      const exerciseIdentifier: string = exerciseApiNameToIdentifier[exerciseName] || "hiding_face";
+      const exerciseVector: number[] = exerciseVectorMap[exerciseIdentifier] || [0, 0, 0];
+      const fpsSubsample: number = 3;
+      // console.log("OHE: ", exerciseVector)
 
       processFrame(exerciseVector, allLandmarks, exerciseIdentifier, fpsSubsample);
 
@@ -229,36 +253,67 @@ function SessionPage() {
         }
       }
     }
-  }, [processFrame, poseLandmarker, latestPrediction, exerciseName]);
 
-  useEffect(() => {
-    const runAnimation = (timestamp: number) => {
-      if (!isProcessing) {
-        if (animationFrameIdRef.current)
-          cancelAnimationFrame(animationFrameIdRef.current);
-        return;
+  }, [poseLandmarker, exerciseName, latestPrediction, processFrame])
+
+  const videoFrameCallbackLoop = useCallback(() => {
+    if (!isProcessingRef.current)
+      return;
+
+    // console.log("Running videoFrameCallbackLoop with isProcessingRef @: ", isProcessingRef.current);
+    runLiveDetection();
+
+    const video = webcamRef.current?.video;
+    if (video)
+      (video as any).requestVideoFrameCallback(videoFrameCallbackLoop)
+  }, [runLiveDetection, isProcessing]);
+
+
+  /* This function will serve as a fallback in case
+   * the user's browser does not support requestVideoFrameCallback function.
+   * Chromium-based browsers support the function but other browsers
+   * such as Firefox, and Zen do not.
+   *
+   * This function will call requestAnimationFrame instead of 
+   * requestVideoFrameCallback.
+   * */
+  const animationFrameLoop = useCallback(() => {
+    if (!isProcessingRef.current) {
+      if (animationFrameIdRef.current) {
+        cancelAnimationFrame(animationFrameIdRef.current);
       }
 
-      detect(timestamp);
-      animationFrameIdRef.current = requestAnimationFrame(runAnimation);
-    };
-
-    if (isProcessing) {
-      animationFrameIdRef.current = requestAnimationFrame(runAnimation);
+      return;
     }
 
-    return () => {
-      if (animationFrameIdRef.current)
-        cancelAnimationFrame(animationFrameIdRef.current);
+    // console.log("Running animationFrameLoop with isProcessingRef @: ", isProcessingRef.current);
+    runLiveDetection();
+    animationFrameIdRef.current = requestAnimationFrame(animationFrameLoop);
+  }, [runLiveDetection, isProcessing]);
 
-    };
-  }, [isProcessing, detect]);
+  const startDetectionLoop = useCallback(() => {
+    const video = webcamRef.current?.video;
+
+    try {
+      console.log("INFO: Using requestVideoFrameCallback for session.");
+      (video as any).requestVideoFrameCallback(videoFrameCallbackLoop);
+
+    } catch (any) {
+      console.warn("WARN: requestVideoFrameCallback not supported: Falling back to requestAnimationFrame for session.");
+      animationFrameIdRef.current = requestAnimationFrame(animationFrameLoop);
+    }
+  }, [videoFrameCallbackLoop, animationFrameLoop, isProcessing])
 
   const handleStartSession = useCallback(async () => {
+    // if (!user || !activeRequirement || !isReadyToStart) {
     if (!user || !activeRequirement) {
+      console.warn("WARN: Attempting to start session before system was ready.")
       setError("User or exercise data is missing.");
       return;
     }
+
+    videoFrameCountRef.current = 0;
+
     try {
       const newSession = await startSession(user.id, activeRequirement.exercise_id);
 
@@ -267,8 +322,9 @@ function SessionPage() {
       const newSet = await addSetToSession(user.id, newSession.id, { set_number: 1 });
 
       setActiveSetId(newSet.id);
-      setSessionState('running');
+      setSessionState("running");
       setIsProcessing(true);
+
       videoRef.current?.play();
 
       console.log(`Started session ${newSession.id}, set ${newSet.id}`);
@@ -280,11 +336,23 @@ function SessionPage() {
 
   }, [user, activeRequirement]);
 
+  useEffect(() => {
+    if (isProcessingRef.current && sessionState === "running")
+      startDetectionLoop();
+  }, [isProcessing, sessionState])
+
+
   const handleReady = useCallback(() => {
     setIsSetUpDialogOpen(false);
-    handleStartSession();
+    setIsUserPositioned(true);
 
-  }, [handleStartSession]);
+  }, [handleStartSession, landmarkerStatus]);
+
+  useEffect(() => {
+    if (isUserPositioned && isReadyToStart)
+      handleStartSession();
+
+  }, [isUserPositioned, isReadyToStart, handleStartSession])
 
   const handleTogglePlay = useCallback(() => {
     if (sessionState === 'running') {
@@ -503,7 +571,12 @@ function SessionPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-100 text-slate-900">
-      <UserPositionSetupDialog isOpen={isSetUpDialogOpen} onClose={() => setIsSetUpDialogOpen(false)} onReady={handleReady} />
+      <UserPositionSetupDialog
+        isOpen={isSetUpDialogOpen}
+        onClose={() => setIsSetUpDialogOpen(false)}
+        onReady={handleReady}
+        isSystemReady={isReadyToStart}
+      />
       <Dialog open={isPainModalOpen} onOpenChange={setIsPainModalOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Weekly Feedback</DialogTitle><DialogDescription>On a scale of 1-10, how would you rate your pain during this week's exercises? This helps us adjust your plan.</DialogDescription></DialogHeader>

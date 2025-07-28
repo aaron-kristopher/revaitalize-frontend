@@ -15,6 +15,7 @@ import MainContentLayout from "./components/layout/MainContentLayout.tsx";
 import DashboardPage from "./pages/dashboard/DashboardPage.tsx";
 import SessionPage from "./pages/session/SessionPage.tsx";
 import ProfilePage from './pages/profile/ProfilePage.tsx';
+import { PoseLandmarkerProvider } from "@/context/PoseLandmarkerContext.tsx";
 import { RecordDatasetPage } from './pages/dataset/RecordDatasetPage.tsx';
 
 
@@ -48,7 +49,11 @@ function App() {
       >
         <Route index element={<DashboardPage />} />
 
-        <Route path="session/:requirementId" element={<SessionPage />} />
+        <Route path="session/:requirementId" element={
+          <PoseLandmarkerProvider>
+            < SessionPage />
+          </PoseLandmarkerProvider>
+        } />
 
         <Route path="profile" element={<ProfilePage />} />
         <Route path="dataset" element={<RecordDatasetPage />} />

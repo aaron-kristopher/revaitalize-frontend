@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useSidebar } from "@/context/SidebarContext";
-import { useAuth } from "@/context/AuthContext";
-import {
-  getUserSessionsByTimeRange,
-  type Session,
-  getExercises,
-  type Exercise,
-  type TimeFilter,
-} from "@/api/userService";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
+import { Calendar, Download, Loader2, TrendingUp, Activity } from "lucide-react";
+
 import {
   LineChart,
   Line,
@@ -20,14 +20,18 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
-import { Edit3, Calendar, Download, Check, Loader2, TrendingUp, Activity } from "lucide-react";
+import { useSidebar } from "@/context/SidebarContext";
+import { useAuth } from "@/context/AuthContext";
+import { useDisplaySessionDetail } from "@/hooks/useDisplaySessionDetail";
+import { SessionDetailDailog } from "./SessionDetailDailog";
 import sidebarLogo from "@/assets/imgs/sidebar.png";
+import {
+  getUserSessionsByTimeRange,
+  type Session,
+  getExercises,
+  type Exercise,
+  type TimeFilter,
+} from "@/api/userService";
 
 
 const InfoRow = ({ label, value }: { label: string | React.ReactNode; value: string | React.ReactNode }) => (
@@ -37,7 +41,6 @@ const InfoRow = ({ label, value }: { label: string | React.ReactNode; value: str
   </div>
 );
 
-// Define the structure for our chart data
 interface ChartData {
   date: string;
   score: number | null;
@@ -46,18 +49,15 @@ interface ChartData {
 const DashboardPage = () => {
   const { setSidebarOpen } = useSidebar();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("this_week"); // Default to this_week for better chart view
-  const [editMode, setEditMode] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
+  const { getSessionById } = useDisplaySessionDetail();
 
+  const [activeTab, setActiveTab] = useState("this_week");
   const [sessions, setSessions] = useState<Session[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // This effect fetches the list of all exercises once on mount
   useEffect(() => {
     const fetchAllExercises = async () => {
       try {
@@ -70,13 +70,12 @@ const DashboardPage = () => {
     fetchAllExercises();
   }, []);
 
-  // This effect fetches session data whenever the user or active tab changes
   useEffect(() => {
     if (user && activeTab) {
       const fetchSessionData = async () => {
         try {
           setIsLoadingData(true);
-          const fetchedSessions = await getUserSessionsByTimeRange(user.id, activeTab as TimeFilter);
+          const fetchedSessions: Session[] = await getUserSessionsByTimeRange(user.id, activeTab as TimeFilter);
           setSessions(fetchedSessions);
           setError(null);
         } catch (err: any) {
@@ -90,7 +89,6 @@ const DashboardPage = () => {
     }
   }, [user, activeTab]);
 
-  // --- NEW: This effect transforms session data for the chart ---
   useEffect(() => {
     if (sessions.length > 0) {
       // Group sessions by date and calculate average score
@@ -112,26 +110,11 @@ const DashboardPage = () => {
 
       }))
 
-      console.log("format: ", formattedData);
-
       setChartData(formattedData);
     } else {
       setChartData([]);
     }
   }, [sessions]);
-
-
-  const handleSaveChanges = () => {
-    // This is placeholder logic, can be expanded later
-    setIsSaving(true);
-    setSaveSuccess(false);
-    setTimeout(() => {
-      setIsSaving(false);
-      setSaveSuccess(true);
-      setEditMode(false);
-      setTimeout(() => setSaveSuccess(false), 2500);
-    }, 1500);
-  };
 
   const pageVariants = {
     initial: { opacity: 0, y: 20 },
@@ -152,8 +135,6 @@ const DashboardPage = () => {
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          {/* We can hide the edit button for now as the chart is not editable */}
-          {/* {editMode ? ( ... ) : ( ... )} */}
         </div>
       </header>
 
@@ -184,7 +165,6 @@ const DashboardPage = () => {
             </Card>
           </div>
 
-          {/* --- NEW CHART SECTION --- */}
           <div className="lg:col-span-3">
             <h2 className="text-xl font-bold text-slate-800 mb-4">Weekly Progress</h2>
             <Card className="shadow-sm">
@@ -242,17 +222,19 @@ const DashboardPage = () => {
           <motion.div key={activeTab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
             <TabsContent value={activeTab} className="mt-0">
               <div className="border border-slate-200 rounded-lg bg-white">
-                <div className="hidden md:grid md:grid-cols-4 gap-4 text-xs font-medium text-slate-500 uppercase tracking-wide p-4 bg-slate-100 rounded-t-lg">
+                <div className="hidden md:grid md:grid-cols-[240px_1fr_1fr_1fr_1fr] gap-4 text-xs font-medium text-slate-500 uppercase tracking-wide p-4 bg-slate-100 rounded-t-lg">
+                  <div></div>
                   <div>Date</div>
                   <div>Exercise</div>
                   <div>Score</div>
                   <div>Performance</div>
                 </div>
                 <div className="divide-y divide-slate-200 md:divide-y-0">
-                  {isLoadingData && <div className="p-8 text-center text-slate-500">
-                    <Loader2 className="mx-auto h-8 w-8 animate-spin mb-2" />
-                    Loading sessions...
-                  </div>}
+                  {isLoadingData &&
+                    <div className="p-8 text-center text-slate-500">
+                      <Loader2 className="mx-auto h-8 w-8 animate-spin mb-2" />
+                      Loading sessions...
+                    </div>}
                   {error && <p className="p-4 text-center text-red-500">Error: {error}</p>}
 
                   {!isLoadingData && !error && sessions.map((session) => {
@@ -268,7 +250,14 @@ const DashboardPage = () => {
                     else if (score >= 75) { rate = "Good"; status = "warning"; }
 
                     return (
-                      <div key={session.id} className="p-4 md:grid md:grid-cols-4 md:gap-4 md:items-center">
+                      <div
+                        key={session.id}
+                        className="p-4 md:grid md:grid-cols-[240px_1fr_1fr_1fr_1fr] md:gap-4 md:items-center hover:bg-slate-100 transition-100"
+                        onClick={() => { getSessionById(user!.id, session.id); }}
+                      >
+
+                        <SessionDetailDailog />
+
                         {/* Mobile View */}
                         <div className="md:hidden">
                           <div className="flex justify-between items-center mb-2">
@@ -282,6 +271,7 @@ const DashboardPage = () => {
                             </Badge>
                           </div>
                         </div>
+
                         {/* Desktop View */}
                         <div className="hidden md:flex items-center gap-2 text-sm text-slate-700">
                           <Calendar className="w-4 h-4 text-slate-400" /> <span>{sessionDate}</span>

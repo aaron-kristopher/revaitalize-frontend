@@ -47,7 +47,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(userData);
     setToken(authToken);
 
-    console.log(userData)
     localStorage.setItem('accessToken', authToken);
   };
 

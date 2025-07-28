@@ -4,13 +4,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import type { CalibrationDirection } from "@/hooks/usePositionCalibration";
 import { usePositionCalibration } from "@/hooks/usePositionCalibration";
-import { CameraIcon, CheckCircleIcon, X, AlertCircleIcon, ArrowLeft, ArrowRight, ArrowUp, ArrowDown } from 'lucide-react';
+import { CheckCircleIcon, X, AlertCircleIcon, ArrowLeft, ArrowRight, ArrowUp, ArrowDown } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 interface UserPositionSetupDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onReady: () => void;
+  isSystemReady: boolean
 }
 
 const DirectionIndicator = ({ direction }: { direction: CalibrationDirection }) => {
@@ -28,16 +29,13 @@ const DirectionIndicator = ({ direction }: { direction: CalibrationDirection }) 
 };
 
 
-export function UserPositionSetupDialog({ isOpen, onClose, onReady }: UserPositionSetupDialogProps) {
+export function UserPositionSetupDialog({ isOpen, onClose, onReady, isSystemReady }: UserPositionSetupDialogProps) {
   const dialogWebcamRef = useRef<Webcam | null>(null);
 
-  // The hook is only active when the dialog is open
-  const { isPositioned, calibrationStatus, countdown, direction } = usePositionCalibration(dialogWebcamRef, isOpen);
+  const { isPositioned, calibrationStatus, countdown, direction } = usePositionCalibration(dialogWebcamRef, isOpen && isSystemReady);
 
-  // This effect is now solely responsible for firing onReady when the countdown finishes.
   useEffect(() => {
     if (countdown === 0) {
-      // A small delay can prevent a jarring transition
       setTimeout(() => {
         onReady();
       }, 500);
@@ -45,6 +43,7 @@ export function UserPositionSetupDialog({ isOpen, onClose, onReady }: UserPositi
   }, [countdown, onReady]);
 
   const feedbackType = isPositioned ? "success" : "warning";
+  const currentStatusText = isSystemReady ? calibrationStatus : "Loading PoseLandmarker model...";
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -123,7 +122,7 @@ export function UserPositionSetupDialog({ isOpen, onClose, onReady }: UserPositi
                   feedbackType === 'success' && 'text-green-700',
                   feedbackType === 'warning' && 'text-yellow-700',
                 )}>
-                  {calibrationStatus}
+                  {currentStatusText}
                 </p>
               </div>
 

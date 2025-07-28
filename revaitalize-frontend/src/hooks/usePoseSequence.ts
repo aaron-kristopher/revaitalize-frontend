@@ -1,5 +1,7 @@
 import { useState, useCallback, useRef } from "react";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL
+
 const KEYPOINTS_IDX = [
   0, 2, 5, 7, 8, 11, 12, 13, 14, 15, 16, 23, 24
   // 0: "Nose",
@@ -53,7 +55,7 @@ export const usePoseSequence = () => {
     isReadyToPredict.current = false;
 
     try {
-      const url = "http://127.0.0.1:8001/predict/api/predict/";
+      const url = `${API_BASE_URL}/predict/api/predict/`;
       const response = await fetch(url, {
         method: "POST",
         headers: {
