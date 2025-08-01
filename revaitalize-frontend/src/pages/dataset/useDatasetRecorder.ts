@@ -1,8 +1,8 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import Webcam from "react-webcam";
 import { DrawingUtils, PoseLandmarker } from "@mediapipe/tasks-vision";
-import { useAuth } from "@/context/AuthContext";
-import { usePoseLandmarker } from "@/hooks/usePoseLandmarker";
+import { useAuth } from "@/shared/context/AuthContext";
+import { usePoseLandmarker } from "@/shared/hooks/usePoseLandmarker";
 
 const KEYPOINT_MAPPING = [
 	"Nose", "Left_eye_inner", "Left_eye", "Left_eye_outer", "Right_eye_inner", "Right_eye", "Right_eye_outer",

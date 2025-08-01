@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import { useRef, useState, useEffect } from "react";
 import Webcam from "react-webcam";
 
@@ -7,7 +7,7 @@ import { useUpdateDatasetRecorder } from "./useDatasetRecorder";
 import ELKVideo from "@/assets/videos/fs-sitting.mp4"
 import CTKVideo from "@/assets/videos/hf-sitting.mp4"
 import RTKVideo from "@/assets/videos/tr-sitting.mp4"
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/shared/context/AuthContext";
 
 const exercises: { value: string; label: string }[] = [
   {
