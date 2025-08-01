@@ -7,13 +7,12 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (userData: User, token: string) => void;
   logout: () => void;
+  updateUserContext: (userData: User) => void;
   isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// 3. Create the "Provider" component. This component will wrap our entire app.
-//    It holds the actual state and logic.
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -54,8 +53,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     setToken(null);
     localStorage.removeItem('accessToken');
-    // Here you would redirect to the login page
+
     window.location.href = '/login';
+  };
+
+  const updateUserContext = (newUserData: User) => {
+    setUser(newUserData);
   };
 
   const value = {
@@ -64,6 +67,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isAuthenticated: !!user,
     login,
     logout,
+    updateUserContext,
     isLoading,
   };
 

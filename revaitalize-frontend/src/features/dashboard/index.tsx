@@ -70,7 +70,7 @@ const DashboardPage = () => {
               variant="ghost"
               size="icon"
               onClick={() => setSidebarOpen((prev) => !prev)}
-              className="hover:bg-slate-100 hidden md:inline-flex"
+              className="hover:bg-slate-100 inline-flex"
             >
               <img src={sidebarLogo} alt="Menu Icon" className="w-6 h-6" />
             </Button>
@@ -85,7 +85,7 @@ const DashboardPage = () => {
         </div>
       </header>
 
-      <div className="flex-1 bg-slate-50 overflow-y-auto">
+      <div className="flex-1 bg-slate-50 h-full overflow-y-auto">
         <SessionDetailDialog
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
@@ -218,9 +218,6 @@ const DashboardPage = () => {
                     {!isLoading && !error && sessions.length === 0 && (
                       <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
                         <p className="mb-2">No sessions recorded for this period</p>
-                        <Button variant="outline" className="mt-2">
-                          Start New Session
-                        </Button>
                       </div>
                     )}
 
@@ -252,11 +249,10 @@ const DashboardPage = () => {
                           return (
                             <div
                               key={session.id}
-                              className="group p-4 transition-colors hover:bg-muted/50 cursor-pointer"
-                              onClick={() => handleSelectSession(session)}
+                              className="group p-4 transition-colors hover:bg-muted/50"
                             >
                               {/* Mobile View */}
-                              <div className="md:hidden space-y-2">
+                              <div className="md:hidden space-y-2 cursor-pointer" onClick={() => handleSelectSession(session)} >
                                 <div className="flex items-center justify-between">
                                   <h3 className="font-medium">{exerciseName}</h3>
                                   <Badge variant={status}>{rate}</Badge>

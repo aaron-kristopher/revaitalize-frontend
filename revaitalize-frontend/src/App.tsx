@@ -14,7 +14,7 @@ import SignupPage from "@/pages/signup";
 import OnboardingPage from "@/pages/onboarding";
 import DashboardPage from "@/pages/dashboard";
 // import SessionPage from "@/pages/session";
-// import ProfilePage from "@/pages/profile";
+import ProfilePage from "@/pages/profile";
 
 import { RecordDatasetPage } from "./pages/dataset/RecordDatasetPage";
 
@@ -70,7 +70,7 @@ function App() {
                 {/*   < SessionPage /> */}
                 {/* } /> */}
                 {/**/}
-                {/* <Route path="profile" element={<ProfilePage />} /> */}
+                <Route path="profile" element={<ProfilePage />} />
                 <Route path="dataset" element={<RecordDatasetPage />} />
               </Route>
               {/* </PoseLandmarkerProvider> */}

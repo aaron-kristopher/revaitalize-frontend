@@ -1,23 +1,20 @@
-// FIX: Canvas drawing does not reflect current error prediction. Shows green connections despite the "Adjust your form" notification
-// FIX: 
-
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Webcam from "react-webcam";
 
-import { useSidebar } from "@/context/SidebarContext";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { useSidebar } from "@/shared/context/SidebarContext";
+import { Button } from "@/shared/components/ui/button";
+import { Progress } from "@/shared/components/ui/progress";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/shared/components/ui/breadcrumb";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/shared/components/ui/dialog";
+import { Label } from "@/shared/components/ui/label";
+import { Input } from "@/shared/components/ui/input";
 import { CheckCircle2, AlertTriangle, Play, Square, Pause } from 'lucide-react';
 
-import { usePoseSequence } from "../../hooks/usePoseSequence";
-import UserPositionSetupDialog from './UserPositionSetupDialog.tsx';
-import { useSharedPoseLandmarker } from '@/context/PoseLandmarkerContext.tsx';
-import { useAuth } from '@/context/AuthContext';
+import { usePoseSequence } from "./hooks/usePoseSequence";
+import UserPositionSetupDialog from './components/UserPositionSetupDialog.tsx';
+import { useSharedPoseLandmarker } from '@/shared/context/PoseLandmarkerContext.tsx';
+import { useAuth } from '@/shared/context/AuthContext';
 import {
   getUserSessionRequirements,
   type SessionRequirement,
@@ -29,7 +26,7 @@ import {
   getUserSessionsByTimeRange,
   getExercises,
   getUserProfile
-} from '@/api/userService';
+} from '@/shared/api/userService';
 
 import sidebarLogo from "@/assets/imgs/sidebar.png";
 import flankStretchVideo from '@/assets/videos/fs-sitting.mp4';

@@ -1,9 +1,9 @@
 import { useEffect, useRef } from "react";
 import Webcam from "react-webcam";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import type { CalibrationDirection } from "@/hooks/usePositionCalibration";
-import { usePositionCalibration } from "@/hooks/usePositionCalibration";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/components/ui/dialog";
+import { Button } from "@/shared/components/ui/button";
+import type { CalibrationDirection } from "../hooks/usePositionCalibration";
+import { usePositionCalibration } from "../hooks/usePositionCalibration";
 import { CheckCircleIcon, X, AlertCircleIcon, ArrowLeft, ArrowRight, ArrowUp, ArrowDown } from 'lucide-react';
 import { cn } from "@/lib/utils";
 

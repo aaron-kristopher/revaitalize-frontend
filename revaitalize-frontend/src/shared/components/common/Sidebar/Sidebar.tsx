@@ -13,7 +13,7 @@ function Sidebar() {
 
   return (
     <nav
-      className="sticky top-0 h-screen flex flex-col shrink-0 text-white p-3 transition-all duration-300 ease-in-out bg-gradient-to-b from-[#023047] to-[#003B6D]"
+      className="hidden sm:flex sticky top-0 h-screen flex-col shrink-0 text-white p-3 transition-all duration-300 ease-in-out bg-gradient-to-b from-[#023047] to-[#003B6D]"
       style={{
         width: isSidebarOpen ? expandedWidth : collapsedWidth,
       }}

@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from "react";
-import { useSharedPoseLandmarker } from "@/context/PoseLandmarkerContext";
+import { useSharedPoseLandmarker } from "@/shared/context/PoseLandmarkerContext";
 import Webcam from "react-webcam";
 
 export type CalibrationDirection = 'left' | 'right' | 'up' | 'down' | 'forward' | 'back' | null;
