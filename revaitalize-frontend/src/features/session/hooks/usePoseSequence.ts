@@ -36,22 +36,22 @@ interface BlazePoseLandmarks {
 type PoseStatus = typeof STATUS[keyof typeof STATUS]
 
 export const usePoseSequence = () => {
-
-
   const [latestPrediction, setLatestPrediction] = useState<number[] | null>(null);
   const [status, setStatus] = useState<PoseStatus>(STATUS.IDLE);
 
   const latestPredictionRef = useRef<number[] | null>(null);
   const landmarkSequence = useRef<number[][]>([]);
   const isReadyToPredict = useRef<boolean>(true);
-  const frameCount = useRef<number>(0);
+  const videoFrameCounterRef = useRef<number>(0);
 
   const sendSequenceForPrediction = useCallback(async (exerciseName: string) => {
 
     if (landmarkSequence.current.length < 20 || !isReadyToPredict.current) {
+      console.log(`Not ready to predict: sequence length=${landmarkSequence.current.length}, isReady=${isReadyToPredict.current}`);
       return;
     }
 
+    console.log("Starting prediction API call...");
     setStatus(STATUS.FETCHING);
     isReadyToPredict.current = false;
 
@@ -75,6 +75,8 @@ export const usePoseSequence = () => {
       const result = await response.json();
       const newPrediction = result.prediction[0]
 
+      console.log(`Received prediction from API: [${newPrediction.join(', ')}]`);
+
       setLatestPrediction(newPrediction);
       latestPredictionRef.current = newPrediction;
 
@@ -86,16 +88,13 @@ export const usePoseSequence = () => {
 
     } finally {
       isReadyToPredict.current = true;
+      console.log("Prediction cycle completed, ready for next prediction");
     }
   }, [])
 
-  const processFrame = useCallback(async (ohe: number[], landmarks: BlazePoseLandmarks[], exerciseName: string, fpsSubsample: number) => {
-    frameCount.current++;
-
-    if (frameCount.current % fpsSubsample !== 0) {
-      return;
-    }
-
+  const processFrame = useCallback(async (ohe: number[], landmarks: BlazePoseLandmarks[], exerciseName: string) => {
+    videoFrameCounterRef.current++;
+    
     const filteredLandmarks = KEYPOINTS_IDX.map(index => landmarks[index]).flatMap(lm => [lm.x, lm.y, lm.z]);
     const frameData: number[] = [...ohe, ...filteredLandmarks];
 
@@ -105,11 +104,15 @@ export const usePoseSequence = () => {
 
     landmarkSequence.current.push(frameData)
 
-    if (landmarkSequence.current.length === 20 && isReadyToPredict.current) {
-      sendSequenceForPrediction(exerciseName)
+    if (videoFrameCounterRef.current % 10 === 0) { // Log every 10 frames to avoid spam
+      console.log(`Frame ${videoFrameCounterRef.current}: sequence length=${landmarkSequence.current.length}/20`);
     }
 
-  }, [sendSequenceForPrediction]);
+    if (landmarkSequence.current.length === 20 && isReadyToPredict.current) {
+      console.log(`Sending sequence for prediction, exercise: ${exerciseName}, sequence length: ${landmarkSequence.current.length}`);
+      sendSequenceForPrediction(exerciseName)
+    }
+  }, [sendSequenceForPrediction])
 
-  return { latestPrediction, latestPredictionRef, processFrame }
+  return { latestPrediction, latestPredictionRef, processFrame, status }
 }

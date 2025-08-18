@@ -85,7 +85,7 @@ const DashboardPage = () => {
         </div>
       </header>
 
-      <div className="flex-1 bg-slate-50 h-full overflow-y-auto">
+      <div className="flex-1 bg-slate-50 h-full">
         <SessionDetailDialog
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}

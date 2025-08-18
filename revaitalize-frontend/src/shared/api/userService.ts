@@ -307,8 +307,22 @@ export const addRepToSet = async (userId: number, sessionId: number, setId: numb
   return response.json();
 };
 
-export const endSession = async (userId: number, sessionId: number, finalScore: number) => {
-  const payload = { is_completed: true, session_quality_score: finalScore, error_flag: "pending" };
+export const updateExerciseSet = async (userId: number, sessionId: number, setId: number, updateData: { set_quality_score?: number, error_flag?: string, is_completed?: boolean }) => {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/sessions/${sessionId}/sets/${setId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updateData),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.detail || 'Failed to update exercise set.');
+  }
+  return response.json();
+};
+
+export const endSession = async (userId: number, sessionId: number, finalScore: number, sessionErrorFlag: string) => {
+  const payload = { is_completed: true, session_quality_score: finalScore, error_flag: sessionErrorFlag };
   const response = await fetch(`${API_BASE_URL}/users/${userId}/sessions/${sessionId}/end`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
