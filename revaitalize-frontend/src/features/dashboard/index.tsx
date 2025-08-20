@@ -50,6 +50,8 @@ const DashboardPage = () => {
     setIsModalOpen,
     selectedSession,
     handleSelectSession,
+    isDownloading, 
+    handleDownloadReport,
   } = useDashboard();
 
   const pageVariants = {
@@ -169,14 +171,24 @@ const DashboardPage = () => {
                 <h2 className="text-2xl font-semibold text-foreground">Session History</h2>
                 <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
                   <TabsList className="h-10">
+                    <TabsTrigger value="all_time">All Time</TabsTrigger>
                     <TabsTrigger value="today">Today</TabsTrigger>
                     <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
                     <TabsTrigger value="this_week">This Week</TabsTrigger>
                     <TabsTrigger value="this_month">This Month</TabsTrigger>
                   </TabsList>
-                  <Button variant="outline" className="w-full sm:w-auto">
-                    <Download className="w-4 h-4 mr-2" />
-                    Download Progress
+                  <Button
+                      variant="outline"
+                      className="w-full sm:w-auto"
+                      onClick={handleDownloadReport}
+                      disabled={isDownloading || isLoading || sessions.length === 0}
+                  >
+                      {isDownloading ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                          <Download className="w-4 h-4 mr-2" />
+                      )}
+                      {isDownloading ? 'Preparing Report...' : 'Download Report'}
                   </Button>
                 </div>
               </div>
