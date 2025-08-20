@@ -36,13 +36,15 @@ export const useSessionLifecycle = (
   const currentRepPredictionsRef = useRef<number[][]>([]);
   const [sessionScores, setSessionScores] = useState<number[]>([]);
   const mostFrequentErrorRef = useRef<string>("");
-  
+
   // Add refs to track video state
   const videoStartTimeRef = useRef<number>(0);
   const isVideoPlayingRef = useRef<boolean>(false);
-  
+
   // Add ref to track current set scores
   const currentSetScoresRef = useRef<number[]>([]);
+  // Add ref to track error flags for each rep in the current set
+  const currentSetErrorFlagsRef = useRef<string[]>([]);
 
   const handleStartSession = useCallback(async () => {
     if (!user || !activeRequirement)
@@ -75,6 +77,8 @@ export const useSessionLifecycle = (
 
       // Reset current set scores for new set
       currentSetScoresRef.current = [];
+      // Reset current set error flags for new set
+      currentSetErrorFlagsRef.current = [];
 
     } catch (error: any) {
       console.error("Failed to start session", error);
@@ -85,7 +89,7 @@ export const useSessionLifecycle = (
   const handleRepComplete = useCallback(async () => {
     console.log(`=== HANDLE REP COMPLETE START ===`);
     console.log(`User: ${!!user}, Session ID: ${activeSessionId}, Set ID: ${activeSetId}, Requirement: ${!!activeRequirement}`);
-    
+
     if (!user || !activeSessionId || !activeSetId || !activeRequirement) {
       console.log("Missing required data, returning early");
       return;
@@ -105,9 +109,9 @@ export const useSessionLifecycle = (
     if (video && video.duration > 0) {
       const videoPlayedDuration = video.currentTime - videoStartTimeRef.current;
       const minPlayDuration = Math.max(1, video.duration * 0.5); // At least 50% of video duration (reduced from 80%)
-      
+
       console.log(`Video duration check: played=${videoPlayedDuration.toFixed(2)}s, min=${minPlayDuration.toFixed(2)}s, total=${video.duration.toFixed(2)}s`);
-      
+
       if (videoPlayedDuration < minPlayDuration) {
         console.log("Video ended too early, ignoring rep completion");
         // Reset video and continue
@@ -128,18 +132,23 @@ export const useSessionLifecycle = (
 
     console.log(`Adding session score: ${qualityScore} (total predictions: ${totalPredictions}, errors: ${totalErrors})`);
     console.log(`Current rep predictions before clearing: ${currentRepPredictionsRef.current.length} predictions`);
-    
+
     // Add to both session scores and current set scores
     setSessionScores(prev => {
       const newScores = [...prev, qualityScore];
       console.log(`Session scores updated: ${newScores.join(', ')}`);
       return newScores;
     });
-    
+
     // Add to current set scores
     currentSetScoresRef.current.push(qualityScore);
     console.log(`Current set scores: [${currentSetScoresRef.current.join(', ')}]`);
-    
+
+    // Store the error flag for this rep before clearing predictions
+    const repErrorFlag = mostFrequentErrorRef.current;
+    currentSetErrorFlagsRef.current.push(repErrorFlag);
+    console.log(`Current set error flags: [${currentSetErrorFlagsRef.current.join(', ')}]`);
+
     currentRepPredictionsRef.current = [];
     console.log(`Current rep predictions after clearing: ${currentRepPredictionsRef.current.length} predictions`);
 
@@ -150,7 +159,7 @@ export const useSessionLifecycle = (
     await addRepToSet(user.id, activeSessionId, activeSetId, {
       rep_number: newRepCount,
       rep_quality_score: qualityScore,
-      error_flag: mostFrequentErrorRef.current,
+      error_flag: repErrorFlag,
     });
 
     console.log(`Successfully saved rep ${newRepCount}`);
@@ -161,26 +170,34 @@ export const useSessionLifecycle = (
       console.log(`Set ${currentSet} completed. Moving to next set or ending session.`);
       console.log(`Total reps completed in this set: ${currentSetScoresRef.current.length}`);
       console.log(`Set scores: [${currentSetScoresRef.current.join(', ')}]`);
-      
+
       // Calculate set quality score and update the exercise set
       if (currentSetScoresRef.current.length > 0) {
         const setQualityScore = currentSetScoresRef.current.reduce((a, b) => a + b, 0) / currentSetScoresRef.current.length;
         console.log(`Set ${currentSet} quality score: ${setQualityScore.toFixed(2)}`);
-        
+
+        // Determine if any rep in this set had an error by checking stored error flags
+        const hasAnyError = currentSetErrorFlagsRef.current.some(errorFlag => errorFlag !== "No Error");
+
+        // Set error_flag based on whether any rep had errors
+        const setErrorFlag = hasAnyError ? "With Error" : "No Error";
+        console.log(`Set ${currentSet} error flag: ${setErrorFlag} (hasAnyError: ${hasAnyError})`);
+        console.log(`Error flags for this set: [${currentSetErrorFlagsRef.current.join(', ')}]`);
+
         try {
           await updateExerciseSet(user.id, activeSessionId, activeSetId, {
             set_quality_score: setQualityScore,
-            error_flag: mostFrequentErrorRef.current,
+            error_flag: setErrorFlag,
             is_completed: true
           });
-          console.log(`Successfully updated set ${currentSet} with quality score`);
+          console.log(`Successfully updated set ${currentSet} with quality score and error flag: ${setErrorFlag}`);
         } catch (error: any) {
           console.error("Failed to update set quality score:", error);
         }
       } else {
         console.warn(`No scores available for set ${currentSet}`);
       }
-      
+
       if (currentSet >= activeRequirement?.number_of_sets) {
         // All sets and reps completed - end session
         console.log("All sets completed. Ending session.");
@@ -205,7 +222,7 @@ export const useSessionLifecycle = (
     console.log(`=== HANDLE START NEXT SET CALLED ===`);
     console.log(`Call stack:`, new Error().stack);
     console.log(`User: ${!!user}, Session ID: ${activeSessionId}, Current Set: ${currentSet}`);
-    
+
     if (!user || !activeSessionId) {
       console.log("Missing user or session ID, returning early");
       return;
@@ -237,9 +254,11 @@ export const useSessionLifecycle = (
       setCurrentSet(currentSet + 1);
       setCurrentReps(0);
       setSessionState("running");
-      
+
       // Reset current set scores for new set
       currentSetScoresRef.current = [];
+      // Reset current set error flags for new set
+      currentSetErrorFlagsRef.current = [];
 
     } catch (error: any) {
       console.log("Failed to start new session: ", error);
@@ -250,7 +269,7 @@ export const useSessionLifecycle = (
         console.log("Reset isStartingNewSetRef guard");
       }, 100);
     }
-    
+
     console.log(`=== END HANDLE START NEXT SET ===`);
   }, [user, activeSessionId, currentSet, sessionState]);
 
@@ -370,13 +389,13 @@ export const useSessionLifecycle = (
   useEffect(() => {
     if (sessionState === "in_rest") {
       console.log("Starting rest countdown from 60");
-      setRestCountdown(60);
+      setRestCountdown(10);
     }
   }, [sessionState]);
 
   useEffect(() => {
     console.log(`Rest countdown effect running: countdown=${restCountdown}, sessionState=${sessionState}`);
-    
+
     if (restCountdown === null || restCountdown <= 0) {
       return;
     }
@@ -428,5 +447,6 @@ export const useSessionLifecycle = (
     sessionScores,
     isStartingNewSetRef,
     currentSetScoresRef,
+    currentSetErrorFlagsRef,
   }
 }

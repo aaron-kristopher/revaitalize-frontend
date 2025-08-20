@@ -23,7 +23,16 @@ const StatusIndicator = ({
   errorFlag: string | null | undefined
   score: number | null | undefined
 }) => {
-  if (errorFlag && errorFlag !== 'pending') {
+  console.log(errorFlag);
+  if (errorFlag === "No Error") {
+    return (
+      <div className="flex items-center text-green-500">
+        <CheckCircle2 className="w-4 h-4 mr-1" />
+        <span className="text-sm">Good</span>
+      </div>
+    )
+  }
+  else if (errorFlag && errorFlag !== 'pending') {
     return (
       <div className="flex items-center text-destructive">
         <XCircle className="w-4 h-4 mr-1" />
@@ -39,12 +48,6 @@ const StatusIndicator = ({
       </div>
     )
   }
-  return (
-    <div className="flex items-center text-green-500">
-      <CheckCircle2 className="w-4 h-4 mr-1" />
-      <span className="text-sm">Good</span>
-    </div>
-  )
 }
 export const SessionDetailDialog: React.FC<SessionDetailDialogProps> = ({
   isOpen,
