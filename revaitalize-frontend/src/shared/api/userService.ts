@@ -380,6 +380,31 @@ export const updateSessionRequirement = async (
   return response.json();
 };
 
+export interface ChangePasswordPayload {
+  current_password: string;
+  new_password: string;
+}
+
+export const changeUserPassword = async (userId: number, payload: ChangePasswordPayload): Promise<{ message: string }> => {
+  const token = localStorage.getItem('accessToken'); 
+
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/change-password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.detail || 'Failed to change password.');
+  }
+
+  return response.json();
+};
+
 export const getUserMe = async (token: string): Promise<User> => {
   const response = await fetch(`${API_BASE_URL}/users/me`, {
     method: "GET",

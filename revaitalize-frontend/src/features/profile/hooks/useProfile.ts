@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/shared/context/AuthContext";
-import { updateUser, type UserUpdatePayload } from "@/shared/api/userService";
+import { updateUser, type UserUpdatePayload, changeUserPassword} from "@/shared/api/userService";
+
 
 export const useProfile = () => {
 	const { user, updateUserContext, logout } = useAuth();
@@ -18,6 +19,15 @@ export const useProfile = () => {
 	const [isSaving, setIsSaving] = useState<boolean>(false);
 	const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
+
+	const [passwordData, setPasswordData] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+    });
+    const [passwordError, setPasswordError] = useState<string | null>(null);
+    const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+    const [passwordUpdateSuccess, setPasswordUpdateSuccess] = useState(false);
 
 	useEffect(() => {
 
@@ -66,6 +76,43 @@ export const useProfile = () => {
 		}
 	};
 
+	const handlePasswordInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { id, value } = e.target;
+        setPasswordData(prev => ({ ...prev, [id]: value }));
+    };
+
+    const handleUpdatePassword = async () => {
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            setPasswordError("New passwords do not match.");
+            return;
+        }
+        if (passwordData.newPassword.length < 8) {
+            setPasswordError("New password must be at least 8 characters long.");
+            return;
+        }
+        if (!user) {
+            setPasswordError("User not found.");
+            return;
+        }
+
+        setIsUpdatingPassword(true);
+        setPasswordError(null);
+        setPasswordUpdateSuccess(false);
+
+        try {
+            await changeUserPassword(user.id, {
+                current_password: passwordData.currentPassword,
+                new_password: passwordData.newPassword,
+            });
+            setPasswordUpdateSuccess(true);
+            setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        } catch (err: any) {
+            setPasswordError(err.message);
+        } finally {
+            setIsUpdatingPassword(false);
+        }
+    };
+
 	return {
 		user,
 		logout,
@@ -75,5 +122,12 @@ export const useProfile = () => {
 		saveSuccess,
 		error,
 		handleSaveChanges,
+
+		passwordData,
+        handlePasswordInputChange,
+        handleUpdatePassword,
+        isUpdatingPassword,
+        passwordUpdateSuccess,
+        passwordError,
 	}
 }
