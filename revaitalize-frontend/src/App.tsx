@@ -16,8 +16,6 @@ import DashboardPage from "@/pages/dashboard";
 import SessionPage from "@/pages/session";
 import ProfilePage from "@/pages/profile";
 
-import { RecordDatasetPage } from "./pages/dataset/RecordDatasetPage";
-
 import { PoseLandmarkerProvider } from "@/shared/context/PoseLandmarkerContext";
 import { SidebarProvider } from "@/shared/context/SidebarContext"
 import { AuthProvider, useAuth } from "@/shared/context/AuthContext";
@@ -67,7 +65,6 @@ function App() {
                   <Route index element={<DashboardPage />} />
                   <Route path="session/:requirementId" element={< SessionPage />} />
                   <Route path="profile" element={<ProfilePage />} />
-                  <Route path="dataset" element={<RecordDatasetPage />} />
                 </Route>
               </Route>
 
