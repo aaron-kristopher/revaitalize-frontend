@@ -321,8 +321,8 @@ export const updateExerciseSet = async (userId: number, sessionId: number, setId
   return response.json();
 };
 
-export const endSession = async (userId: number, sessionId: number, finalScore: number, sessionErrorFlag: string) => {
-  const payload = { is_completed: true, session_quality_score: finalScore, error_flag: sessionErrorFlag };
+export const endSession = async (userId: number, sessionId: number, finalScore: number, sessionErrorFlag: string, isCompleted: boolean) => {
+  const payload = { is_completed: isCompleted, session_quality_score: finalScore, error_flag: sessionErrorFlag };
   const response = await fetch(`${API_BASE_URL}/users/${userId}/sessions/${sessionId}/end`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },

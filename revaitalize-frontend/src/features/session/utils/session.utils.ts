@@ -3,9 +3,11 @@ export const getPredictionEvaluation = (prediction: number[]): string => {
 		return "Correct";
 	}
 	// A simplified example of error mapping. This can be expanded.
-	if (prediction[0] || prediction[1]) return "Shoulder Misalignment";
-	if (prediction[2] || prediction[3]) return "Elbow Misalignment";
-	if (prediction[4] || prediction[5]) return "Wrist Misalignment";
+	if (prediction[0] && prediction[1] && prediction[2] && prediction[3] && prediction[4] && prediction[5]) return "Upper Body Misalignment";
+	else if (prediction[0] && prediction[1] && prediction[2] && prediction[3]) return "Forearm Misalignment";
+	else if (prediction[0] || prediction[1]) return "Shoulder Misalignment";
+	else if (prediction[2] || prediction[3]) return "Elbow Misalignment";
+	else if (prediction[4] || prediction[5]) return "Wrist Misalignment";
 	return "Incorrect Form";
 };
 

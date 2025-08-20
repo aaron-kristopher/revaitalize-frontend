@@ -288,7 +288,7 @@ export const useSessionLifecycle = (
 
     const finalScore = sessionScores.length > 0 ? sessionScores.reduce((a, b) => a + b, 0) / sessionScores.length : 0;
 
-    await endSession(user.id, activeSessionId, finalScore, mostFrequentErrorRef.current);
+    await endSession(user.id, activeSessionId, finalScore, mostFrequentErrorRef.current, false);
 
     const profile = await getUserProfile(user.id);
     const schedule = profile.onboarding_data?.preferred_schedule || 3;

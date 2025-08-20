@@ -46,7 +46,6 @@ function RouteSelect({ open }: RouteSelectProps) {
   const navItems: NavItem[] = [
     { to: '/app', title: 'Dashboard', Icon: Home },
     { to: '/app/profile', title: 'Profile', Icon: User },
-    { to: '/app/dataset', title: 'Dataset', Icon: Camera },
     ...(sessionLink ? [{ to: sessionLink, title: 'Session', Icon: BarChart }] : [])
   ];
 
