@@ -200,7 +200,7 @@ export interface Session {
   exercise_sets: ExerciseSet[];
 }
 
-export type TimeFilter = 'today' | 'yesterday' | 'this_week' | 'this_month';
+export type TimeFilter = 'today' | 'yesterday' | 'this_week' | 'this_month' | 'all_time';
 
 // RENAMED for clarity
 export const getUserSessionsByTimeRange = async (userId: number, filter: TimeFilter): Promise<Session[]> => {
