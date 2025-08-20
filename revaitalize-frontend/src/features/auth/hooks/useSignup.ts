@@ -32,6 +32,11 @@ export const useSignup = () => {
 			return;
 		}
 
+		if (userData.password.length < 8) {
+            setError("Password must be at least 8 characters long.");
+            return; // Stop the function here
+        }
+
 		setIsLoading(true);
 		setError(null);
 

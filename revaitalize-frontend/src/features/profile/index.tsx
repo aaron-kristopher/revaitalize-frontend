@@ -24,6 +24,12 @@ const ProfilePage: React.FC = () => {
         saveSuccess,
         error,
         handleSaveChanges,
+        passwordData,
+        handlePasswordInputChange,
+        handleUpdatePassword,
+        isUpdatingPassword,
+        passwordUpdateSuccess,
+        passwordError,
     } = useProfile();
 
     const pageVariants = {
@@ -148,20 +154,43 @@ const ProfilePage: React.FC = () => {
                                     <CardContent className="space-y-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="currentPassword">Current Password</Label>
-                                            <Input id="currentPassword" type="password" />
+                                            <Input
+                                                id="currentPassword"
+                                                type="password"
+                                                value={passwordData.currentPassword}
+                                                onChange={handlePasswordInputChange}
+                                            />
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="newPassword">New Password</Label>
-                                            <Input id="newPassword" type="password" />
+                                            <Input
+                                                id="newPassword"
+                                                type="password"
+                                                value={passwordData.newPassword}
+                                                onChange={handlePasswordInputChange}
+                                            />
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                                            <Input id="confirmPassword" type="password" />
+                                            <Input
+                                                id="confirmPassword"
+                                                type="password"
+                                                value={passwordData.confirmPassword}
+                                                onChange={handlePasswordInputChange}
+                                            />
                                         </div>
                                     </CardContent>
-                                    <CardFooter>
-                                        {error && <p className="text-sm font-medium text-red-500 mr-4">{error}</p>}
-                                        <Button>Update Password</Button>
+                                    <CardFooter className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+                                        <Button
+                                            onClick={handleUpdatePassword}
+                                            disabled={isUpdatingPassword || passwordUpdateSuccess}
+                                            className="w-40 transition-all"
+                                        >
+                                            {isUpdatingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                            {passwordUpdateSuccess && <Check className="mr-2 h-4 w-4" />}
+                                            {passwordUpdateSuccess ? 'Password Updated!' : isUpdatingPassword ? 'Updating...' : 'Update Password'}
+                                        </Button>
+                                        {passwordError && <p className="text-sm font-medium text-red-500">{passwordError}</p>}
                                     </CardFooter>
                                 </Card>
                             </motion.div>
