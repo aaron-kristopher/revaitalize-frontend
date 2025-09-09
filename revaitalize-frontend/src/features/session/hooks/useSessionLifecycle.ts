@@ -202,7 +202,7 @@ export const useSessionLifecycle = (
         // All sets and reps completed - end session
         console.log("All sets completed. Ending session.");
         setSessionState("idle");
-        await handleEndSession();
+        await handleEndSession(true);
       } else {
         // Set completed, start rest period
         console.log("Starting rest period.");
@@ -282,13 +282,13 @@ export const useSessionLifecycle = (
     }, 2500)
   }
 
-  const handleEndSession = useCallback(async () => {
+  const handleEndSession = useCallback(async (isComplete: boolean) => {
     if (!user || !activeSessionId)
       return;
 
     const finalScore = sessionScores.length > 0 ? sessionScores.reduce((a, b) => a + b, 0) / sessionScores.length : 0;
 
-    await endSession(user.id, activeSessionId, finalScore, mostFrequentErrorRef.current, false);
+    await endSession(user.id, activeSessionId, finalScore, mostFrequentErrorRef.current, isComplete);
 
     const profile = await getUserProfile(user.id);
     const schedule = profile.onboarding_data?.preferred_schedule || 3;

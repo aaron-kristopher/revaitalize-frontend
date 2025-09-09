@@ -114,7 +114,7 @@ function SessionPage() {
     if (videoRef.current) {
       const video = videoRef.current;
       console.log(`Video duration: ${video.duration}s, readyState: ${video.readyState}`);
-      
+
       // Check if video duration is reasonable
       if (video.duration < 5) {
         console.warn("Video duration is very short, this might cause issues with rep completion");
@@ -139,15 +139,15 @@ function SessionPage() {
     console.log(`Required reps: ${activeRequirement?.number_of_reps}`);
     console.log(`Current set: ${currentSet}`);
     console.log(`Total sets: ${activeRequirement?.number_of_sets}`);
-    
+
     // Only call handleRepComplete if session is actually running and video actually played
     if (sessionState === 'running' && videoRef.current) {
       const video = videoRef.current;
       const videoPlayedDuration = video.currentTime;
       const minPlayDuration = Math.max(1, video.duration * 0.5); // Match the duration check in useSessionLifecycle
-      
+
       console.log(`Video ended with duration: ${videoPlayedDuration.toFixed(2)}s, min required: ${minPlayDuration.toFixed(2)}s`);
-      
+
       if (videoPlayedDuration >= minPlayDuration) {
         console.log("Session is running and video played sufficiently, calling handleRepComplete");
         handleRepComplete();
@@ -251,16 +251,16 @@ function SessionPage() {
                       <p>Video Error: {videoError}</p>
                     </div>
                   ) : (
-                    <video 
-                      ref={videoRef} 
-                      src={videoMap[exerciseName]} 
+                    <video
+                      ref={videoRef}
+                      src={videoMap[exerciseName]}
                       onLoadStart={handleVideoLoad}
                       onLoadedData={handleVideoLoad}
                       onError={handleVideoError}
                       onEnded={handleVideoEnded}
-                      muted 
-                      loop={false} 
-                      className="w-full h-full object-cover" 
+                      muted
+                      loop={false}
+                      className="w-full h-full object-cover"
                     />
                   )}
                   <div className="absolute top-3 left-3 lg:top-4 lg:left-4">
@@ -302,7 +302,7 @@ function SessionPage() {
               </div>
               <div className="flex flex-row-reverse lg:flex-row items-center gap-4 order-3 lg:order-3">
                 <Button size="lg" className="h-14 w-14 lg:h-16 lg:w-16 p-0 rounded-full shadow-lg" onClick={handleTogglePlay} disabled={sessionState === 'idle' || sessionState === 'in_rest'}><PlayIcon className="w-7 h-7 lg:w-8 lg:h-8" /></Button>
-                <Button size="lg" variant="outline" className="h-14 lg:h-16 text-base" onClick={handleEndSession} disabled={sessionState === 'idle'}><Square className="w-5 h-5 mr-2" /> End Session</Button>
+                <Button size="lg" variant="outline" className="h-14 lg:h-16 text-base" onClick={() => { handleEndSession(false) }} disabled={sessionState === 'idle'}><Square className="w-5 h-5 mr-2" /> End Session</Button>
               </div>
             </>
           )}
