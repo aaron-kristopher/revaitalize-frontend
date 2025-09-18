@@ -68,6 +68,8 @@ function SessionPage() {
     handleEndSession,
     handlePainSubmit,
     sessionScores,
+    isTodayAllowed,
+    checkSchedulingAndGuard,
   } = useSessionLifecycle(activeRequirement, videoRef);
 
   const { latestPredictionRef } = useSessionDetection({
@@ -84,6 +86,7 @@ function SessionPage() {
   const [isReadyToStart, setIsReadyToStart] = useState(false);
   const [isUserPositioned, setIsUserPositioned] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
+
 
   // Effect to determine when the entire system is ready to begin
   useEffect(() => {
@@ -191,14 +194,19 @@ function SessionPage() {
     return <div className="flex h-screen w-full items-center justify-center text-red-500">Error: {error}</div>;
   }
 
+  // If today is not allowed (explicit false), don't render the positioning dialog; alert is handled by lifecycle
+  const shouldShowPositionDialog = isTodayAllowed !== false;
+
   return (
     <div className="flex flex-col min-h-screen bg-slate-100 text-slate-900">
-      <UserPositionSetupDialog
-        isOpen={!isUserPositioned}
-        onClose={() => navigate("/app")}
-        onReady={handleReadyFromDialog}
-        isSystemReady={isReadyToStart}
-      />
+      {shouldShowPositionDialog && (
+        <UserPositionSetupDialog
+          isOpen={!isUserPositioned}
+          onClose={() => navigate("/app")}
+          onReady={handleReadyFromDialog}
+          isSystemReady={isReadyToStart}
+        />
+      )}
 
       <Dialog open={isPainModalOpen} onOpenChange={setIsPainModalOpen}>
         <DialogContent>
@@ -232,44 +240,44 @@ function SessionPage() {
         {isLoading ? (<div className="lg:col-span-2 text-center p-8">Loading session details...</div>)
           : error ? (<div className="lg:col-span-2 text-center p-8 text-red-500">Error: {error}</div>)
             : (
-              <>
-                <div className="w-full min-h-[300px] shadow-md bg-black rounded-xl lg:rounded-2xl flex items-center justify-center relative overflow-hidden">
-                  {isUserPositioned && (
-                    <>
-                      <Webcam ref={webcamRef} className="w-full h-full object-cover" mirrored={true} videoConstraints={{ facingMode: 'user' }} />
-                      <canvas ref={canvasRef} className="rotate-y-180 absolute top-0 left-0 w-full h-full" />
-                    </>
-                  )}
-                  <div className="absolute top-3 left-3 lg:top-4 lg:left-4">
-                    <p className="text-base lg:text-lg font-semibold text-white px-3 py-1 bg-black/50 backdrop-blur-sm rounded-lg">Your Camera</p>
+            <>
+              <div className="w-full min-h-[300px] shadow-md bg-black rounded-xl lg:rounded-2xl flex items-center justify-center relative overflow-hidden">
+                {isUserPositioned && (
+                  <>
+                    <Webcam ref={webcamRef} className="w-full h-full object-cover" mirrored={true} videoConstraints={{ facingMode: 'user' }} />
+                    <canvas ref={canvasRef} className="rotate-y-180 absolute top-0 left-0 w-full h-full" />
+                  </>
+                )}
+                <div className="absolute top-3 left-3 lg:top-4 lg:left-4">
+                  <p className="text-base lg:text-lg font-semibold text-white px-3 py-1 bg-black/50 backdrop-blur-sm rounded-lg">Your Camera</p>
 
-                  </div>
                 </div>
-                <div className="w-full min-h-[300px] shadow-md bg-black rounded-xl lg:rounded-2xl flex items-center justify-center relative overflow-hidden">
-                  {videoError ? (
-                    <div className="flex items-center justify-center text-white">
-                      <p>Video Error: {videoError}</p>
-                    </div>
-                  ) : (
-                    <video
-                      ref={videoRef}
-                      src={videoMap[exerciseName]}
-                      onLoadStart={handleVideoLoad}
-                      onLoadedData={handleVideoLoad}
-                      onError={handleVideoError}
-                      onEnded={handleVideoEnded}
-                      muted
-                      loop={false}
-                      className="w-full h-full object-cover"
-                    />
-                  )}
-                  <div className="absolute top-3 left-3 lg:top-4 lg:left-4">
-                    <p className="text-base lg:text-lg font-semibold text-white px-3 py-1 bg-black/50 backdrop-blur-sm rounded-lg">Guide Video</p>
+              </div>
+              <div className="w-full min-h-[300px] shadow-md bg-black rounded-xl lg:rounded-2xl flex items-center justify-center relative overflow-hidden">
+                {videoError ? (
+                  <div className="flex items-center justify-center text-white">
+                    <p>Video Error: {videoError}</p>
+                  </div>
+                ) : (
+                  <video
+                    ref={videoRef}
+                    src={videoMap[exerciseName]}
+                    onLoadStart={handleVideoLoad}
+                    onLoadedData={handleVideoLoad}
+                    onError={handleVideoError}
+                    onEnded={handleVideoEnded}
+                    muted
+                    loop={false}
+                    className="w-full h-full object-cover"
+                  />
+                )}
+                <div className="absolute top-3 left-3 lg:top-4 lg:left-4">
+                  <p className="text-base lg:text-lg font-semibold text-white px-3 py-1 bg-black/50 backdrop-blur-sm rounded-lg">Guide Video</p>
 
-                  </div>
                 </div>
-              </>
-            )}
+              </div>
+            </>
+          )}
       </main>
 
       <footer className="flex-shrink-0 bg-white border-t border-slate-200 shadow-upper p-4">

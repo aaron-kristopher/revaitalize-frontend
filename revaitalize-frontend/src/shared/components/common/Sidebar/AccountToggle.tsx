@@ -4,7 +4,8 @@ import { Dumbbell } from 'lucide-react';
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { useAuth } from '@/shared/context/AuthContext'; // Import useAuth
-import { getUserSessionRequirements } from '@/shared/api/userService'; // Import API function
+import { getUserSessionRequirements, getUserProfile } from '@/shared/api/userService'; // Import API function
+import { SCHEDULE_CONFIG } from '@/shared/config/scheduling';
 
 interface AccountToggleProps {
   open: boolean;
@@ -14,6 +15,7 @@ interface AccountToggleProps {
 function AccountToggle({ open, currentLocation }: AccountToggleProps) {
   const { user } = useAuth(); // Get the logged-in user
   const [firstRequirementId, setFirstRequirementId] = useState<number | null>(null);
+  const [isTodayAllowed, setIsTodayAllowed] = useState<boolean>(true);
 
   // This effect fetches the user's program to find the first exercise
   useEffect(() => {
@@ -28,6 +30,32 @@ function AccountToggle({ open, currentLocation }: AccountToggleProps) {
     }
   }, [user]);
 
+  // Check scheduling for today and hide start button if not allowed
+  useEffect(() => {
+    const run = async () => {
+      if (!user) {
+        setIsTodayAllowed(false);
+        return;
+      }
+      try {
+        const profile = await getUserProfile(user.id);
+        const scheduleCount = profile.onboarding_data?.preferred_schedule || 3;
+        const defaultConfig = SCHEDULE_CONFIG[scheduleCount as keyof typeof SCHEDULE_CONFIG];
+        const custom = profile.onboarding_data?.custom_allowed_days;
+        const allowedDays = Array.isArray(custom)
+          && custom.length === scheduleCount
+          && custom.every((d: number) => d >= 0 && d <= 6)
+            ? custom
+            : defaultConfig.allowedDays;
+        const today = new Date().getDay();
+        setIsTodayAllowed(allowedDays.includes(today));
+      } catch (e) {
+        setIsTodayAllowed(false);
+      }
+    };
+    run();
+  }, [user]);
+
   // Make the session link dynamic. Default to '#' if no requirement is found.
   const sessionLink = firstRequirementId ? `/app/session/${firstRequirementId}` : '#';
 
@@ -38,7 +66,7 @@ function AccountToggle({ open, currentLocation }: AccountToggleProps) {
   if (open) {
     return (
       <div className="w-full">
-        {!isSessionPageActive && (
+        {!isSessionPageActive && isTodayAllowed && (
           <Card className="bg-black/20 backdrop-blur-sm border border-white/10 rounded-lg p-3 mb-4">
             <CardContent className="p-0">
               <p className="text-sm font-medium text-slate-100 mb-2">Ready for a session?</p>
@@ -80,7 +108,7 @@ function AccountToggle({ open, currentLocation }: AccountToggleProps) {
   // --- Collapsed View ---
   return (
     <div className="flex flex-col items-center space-y-2">
-      {!isSessionPageActive && (
+      {!isSessionPageActive && isTodayAllowed && (
         // Use the dynamic sessionLink
         <Link to={sessionLink}>
           <Button

@@ -7,11 +7,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/shared/components/ui/breadcrumb";
-import { User, Shield, Bell, Camera, Loader2, Check } from 'lucide-react';
+import { User, Shield, Bell, Camera, Loader2, Check, Calendar } from 'lucide-react';
 import sidebarLogo from "@/assets/imgs/sidebar.png";
 import { LogOut } from 'lucide-react';
+import { SCHEDULE_CONFIG } from '@/shared/config/scheduling';
 
 import { useProfile } from './hooks/useProfile';
+import { WeekdayPicker } from '@/features/profile/components/WeekdayPicker';
 
 const ProfilePage: React.FC = () => {
     const { setSidebarOpen } = useSidebar();
@@ -24,6 +26,15 @@ const ProfilePage: React.FC = () => {
         saveSuccess,
         error,
         handleSaveChanges,
+        
+        // Schedule-related props
+        scheduleData,
+        handleCustomDaysChange,
+        handleSaveSchedule,
+        isUpdatingSchedule,
+        scheduleUpdateSuccess,
+        scheduleError,
+        
         passwordData,
         handlePasswordInputChange,
         handleUpdatePassword,
@@ -36,6 +47,10 @@ const ProfilePage: React.FC = () => {
         initial: { opacity: 0, y: 20 },
         in: { opacity: 1, y: 0 },
         out: { opacity: 0, y: -20 },
+    };
+
+    const getScheduleDisplayName = (scheduleNumber: number) => {
+        return SCHEDULE_CONFIG[scheduleNumber as keyof typeof SCHEDULE_CONFIG]?.displayName || `${scheduleNumber} days per week`;
     };
 
     return (
@@ -62,7 +77,6 @@ const ProfilePage: React.FC = () => {
             </header>
 
             <div className="flex-1 bg-slate-50 overflow-y-auto">
-
                 <motion.main
                     className="p-4 md:p-6 lg:p-8"
                     initial="initial"
@@ -93,8 +107,9 @@ const ProfilePage: React.FC = () => {
                     </div>
 
                     <Tabs defaultValue="profile" className="w-full">
-                        <TabsList className="grid w-full grid-cols-3 max-w-md">
-                            <TabsTrigger value="profile"><User className="w-4 h-4 mr-2" /> Profile Details</TabsTrigger>
+                        <TabsList className="grid w-full grid-cols-4 max-w-lg">
+                            <TabsTrigger value="profile"><User className="w-4 h-4 mr-2" /> Profile</TabsTrigger>
+                            <TabsTrigger value="schedule"><Calendar className="w-4 h-4 mr-2" /> Schedule</TabsTrigger>
                             <TabsTrigger value="security"><Shield className="w-4 h-4 mr-2" /> Security</TabsTrigger>
                             <TabsTrigger value="notifications"><Bell className="w-4 h-4 mr-2" /> Notifications</TabsTrigger>
                         </TabsList>
@@ -119,7 +134,6 @@ const ProfilePage: React.FC = () => {
                                             <Label htmlFor="email">Email</Label>
                                             <Input id="email" type="email" value={formData.email} onChange={handleInputChange} />
                                         </div>
-                                        {/* You'll need to add inputs for Age and Address as well to make them editable */}
                                         <div className="space-y-2">
                                             <Label htmlFor="age">Age</Label>
                                             <Input id="age" type="number" value={formData.age} onChange={handleInputChange} />
@@ -139,6 +153,55 @@ const ProfilePage: React.FC = () => {
                                             {saveSuccess && <Check className="mr-2 h-4 w-4" />}
                                             {saveSuccess ? 'Saved!' : isSaving ? 'Saving...' : 'Save Changes'}
                                         </Button>
+                                        {error && <p className="text-sm font-medium text-red-500 ml-4">{error}</p>}
+                                    </CardFooter>
+                                </Card>
+                            </motion.div>
+                        </TabsContent>
+
+                        <TabsContent value="schedule" asChild>
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}>
+                                <Card className="mt-6">
+                                    <CardHeader>
+                                        <CardTitle>Workout Schedule</CardTitle>
+                                        <CardDescription>
+                                            Customize your workout days. Your current plan: {getScheduleDisplayName(scheduleData.preferred_schedule)}
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-6">
+                                        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Calendar className="w-5 h-5 text-blue-600" />
+                                                <span className="font-semibold text-blue-900">Current Schedule Plan</span>
+                                            </div>
+                                            <p className="text-blue-800">
+                                                You're on a <strong>{scheduleData.preferred_schedule}-day per week</strong> schedule. 
+                                                Choose which {scheduleData.preferred_schedule} days work best for you.
+                                            </p>
+                                        </div>
+
+                                        <WeekdayPicker
+                                            selectedDays={scheduleData.custom_allowed_days}
+                                            maxDays={scheduleData.preferred_schedule}
+                                            onChange={handleCustomDaysChange}
+                                            disabled={isUpdatingSchedule}
+                                        />
+                                    </CardContent>
+                                    <CardFooter className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+                                        <Button
+                                            onClick={handleSaveSchedule}
+                                            disabled={
+                                                isUpdatingSchedule || 
+                                                scheduleUpdateSuccess ||
+                                                scheduleData.custom_allowed_days.length !== scheduleData.preferred_schedule
+                                            }
+                                            className="w-40 transition-all"
+                                        >
+                                            {isUpdatingSchedule && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                            {scheduleUpdateSuccess && <Check className="mr-2 h-4 w-4" />}
+                                            {scheduleUpdateSuccess ? 'Updated!' : isUpdatingSchedule ? 'Updating...' : 'Save Schedule'}
+                                        </Button>
+                                        {scheduleError && <p className="text-sm font-medium text-red-500">{scheduleError}</p>}
                                     </CardFooter>
                                 </Card>
                             </motion.div>
@@ -209,7 +272,6 @@ const ProfilePage: React.FC = () => {
                                                 <Label htmlFor="progressReports" className="font-semibold">Weekly Progress Reports</Label>
                                                 <p className="text-sm text-slate-500">Receive an email summary of your activity and progress each week.</p>
                                             </div>
-                                            {/* Replace this with a shadcn Switch component when added */}
                                             <div className="w-10 h-6 bg-slate-200 rounded-full p-1 flex items-center cursor-pointer">
                                                 <div className="w-4 h-4 bg-white rounded-full shadow-md transform translate-x-4 transition-transform"></div>
                                             </div>

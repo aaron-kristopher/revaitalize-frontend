@@ -63,6 +63,7 @@ export interface UserProblemCreatePayload {
 export interface OnboardingData extends OnboardingCreatePayload {
   id: number;
   user_id: number;
+  custom_allowed_days?: number[]; // Array of day numbers (0=Sunday, 1=Monday, etc.)
 }
 
 
@@ -421,3 +422,24 @@ export const getUserMe = async (token: string): Promise<User> => {
 
   return response.json();
 }
+
+export interface UpdateCustomScheduleDaysPayload {
+  custom_allowed_days: number[];
+}
+
+export const updateCustomScheduleDays = async (userId: number, payload: UpdateCustomScheduleDaysPayload): Promise<OnboardingData> => {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/onboarding/custom-schedule-days`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.detail || 'Failed to update custom schedule days.');
+  }
+
+  return response.json();
+};

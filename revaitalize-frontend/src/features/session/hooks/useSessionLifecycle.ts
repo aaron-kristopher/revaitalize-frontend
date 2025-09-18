@@ -46,6 +46,65 @@ export const useSessionLifecycle = (
   // Add ref to track error flags for each rep in the current set
   const currentSetErrorFlagsRef = useRef<string[]>([]);
 
+  // New: track if today is allowed (null = unknown/loading)
+  const [isTodayAllowed, setIsTodayAllowed] = useState<boolean | null>(null);
+  const hasRunGuardRef = useRef<boolean>(false);
+  const hasShownAlertRef = useRef<boolean>(false);
+
+  // Helper: compute allowed days from profile
+  const computeAllowedDays = (profile: any) => {
+    const scheduleCount = profile.onboarding_data?.preferred_schedule || 3;
+    const defaultConfig = SCHEDULE_CONFIG[scheduleCount as keyof typeof SCHEDULE_CONFIG];
+    const custom = profile.onboarding_data?.custom_allowed_days;
+    const allowedDays = Array.isArray(custom)
+      && custom.length === scheduleCount
+      && custom.every((d: number) => d >= 0 && d <= 6)
+        ? custom
+        : defaultConfig.allowedDays;
+    return { allowedDays, defaultConfig } as const;
+  }
+
+  // New: early scheduling guard; shows alert and redirects if not allowed
+  const checkSchedulingAndGuard = useCallback(async () => {
+    if (hasRunGuardRef.current) return isTodayAllowed ?? false;
+    hasRunGuardRef.current = true;
+
+    if (!user) {
+      setIsTodayAllowed(false);
+      return false;
+    }
+    try {
+      const profile = await getUserProfile(user.id);
+      const { allowedDays } = computeAllowedDays(profile);
+      const today = new Date().getDay();
+      const allowed = allowedDays.includes(today);
+      setIsTodayAllowed(allowed);
+
+      if (!allowed) {
+        if (!hasShownAlertRef.current) {
+          hasShownAlertRef.current = true;
+          toggleAlert("Today is not a scheduled exercise day. Please come back on your next scheduled day.");
+          setTimeout(() => navigate("/app"), 2500);
+        }
+        return false;
+      }
+      return true;
+    } catch (e) {
+      setIsTodayAllowed(false);
+      if (!hasShownAlertRef.current) {
+        hasShownAlertRef.current = true;
+        toggleAlert("Unable to verify schedule. Please try again later.");
+        setTimeout(() => navigate("/app"), 2500);
+      }
+      return false;
+    }
+  }, [user, navigate, isTodayAllowed]);
+
+  useEffect(() => {
+    // Run the early guard as soon as lifecycle is used
+    checkSchedulingAndGuard();
+  }, [checkSchedulingAndGuard]);
+
   const handleStartSession = useCallback(async () => {
     if (!user || !activeRequirement)
       return;
@@ -53,13 +112,25 @@ export const useSessionLifecycle = (
     console.log("Starting session...");
 
     const profile = await getUserProfile(user.id);
-    const schedule = profile.onboarding_data?.preferred_schedule || 3;
-    const config = SCHEDULE_CONFIG[schedule as keyof typeof SCHEDULE_CONFIG]
+    const scheduleCount = profile.onboarding_data?.preferred_schedule || 3;
+    const defaultConfig = SCHEDULE_CONFIG[scheduleCount as keyof typeof SCHEDULE_CONFIG];
+    const custom = profile.onboarding_data?.custom_allowed_days;
+    const allowedDays = Array.isArray(custom)
+      && custom.length === scheduleCount
+      && custom.every(d => d >= 0 && d <= 6)
+        ? custom
+        : defaultConfig.allowedDays;
+
     const today = new Date().getDay();
 
-    if (!config.allowedDays.includes(today)) {
-      alert("Today is not a scheduled exercise day. Please come back on your next scheduled day.");
-      toggleAlert("Today is not a scheduled exercise day. Please come back on your next scheduled day.");
+    console.log("Allowed days:", allowedDays);
+
+    if (!allowedDays.includes(today)) {
+      if (!hasShownAlertRef.current) {
+        hasShownAlertRef.current = true;
+        toggleAlert("Today is not a scheduled exercise day. Please come back on your next scheduled day.");
+        setTimeout(() => navigate("/app"), 2500);
+      }
       return;
     }
 
@@ -84,7 +155,7 @@ export const useSessionLifecycle = (
       console.error("Failed to start session", error);
       toggleAlert((`Failed to start session: ${error.message}`));
     }
-  }, [user, activeRequirement]);
+  }, [user, activeRequirement, navigate]);
 
   const handleRepComplete = useCallback(async () => {
     console.log(`=== HANDLE REP COMPLETE START ===`);
@@ -291,11 +362,20 @@ export const useSessionLifecycle = (
     await endSession(user.id, activeSessionId, finalScore, mostFrequentErrorRef.current, isComplete);
 
     const profile = await getUserProfile(user.id);
-    const schedule = profile.onboarding_data?.preferred_schedule || 3;
-    const config = SCHEDULE_CONFIG[schedule as keyof typeof SCHEDULE_CONFIG]
+    const scheduleCount = profile.onboarding_data?.preferred_schedule || 3;
+    const defaultConfig = SCHEDULE_CONFIG[scheduleCount as keyof typeof SCHEDULE_CONFIG];
+    const custom = profile.onboarding_data?.custom_allowed_days;
+    const allowedDays = Array.isArray(custom)
+      && custom.length === scheduleCount
+      && custom.every(d => d >= 0 && d <= 6)
+        ? custom
+        : defaultConfig.allowedDays;
+
+    // Determine "last day" based on allowedDays (highest weekday index)
+    const lastDay = allowedDays.length ? Math.max(...allowedDays) : defaultConfig.lastDay;
     const today = new Date().getDay();
 
-    if (today === config.lastDay) {
+    if (today === lastDay) {
       setIsPainModalOpen(true);
     } else {
       toggleAlert("Session complete! Great Work");
@@ -448,5 +528,7 @@ export const useSessionLifecycle = (
     isStartingNewSetRef,
     currentSetScoresRef,
     currentSetErrorFlagsRef,
+    isTodayAllowed,
+    checkSchedulingAndGuard,
   }
 }
