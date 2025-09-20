@@ -1,0 +1,118 @@
+import { useState, useCallback, useRef } from "react";
+
+const API_BASE_URL = import.meta.env.VITE_API_URL
+
+const KEYPOINTS_IDX = [
+  0, 2, 5, 7, 8, 11, 12, 13, 14, 15, 16, 23, 24
+  // 0: "Nose",
+  // 2: "Left_eye",
+  // 5: "Right_eye",
+  // 7: "Left_ear",
+  // 8: "Right_ear",
+  // 11: "Left_shoulder",
+  // 12: "Right_shoulder",
+  // 13: "Left_elbow",
+  // 14: "Right_elbow",
+  // 15: "Left_wrist",
+  // 16: "Right_wrist",
+  // 23: "Left_hip",
+  // 24: "Right_hip",
+]
+
+const STATUS = {
+  IDLE: "idle",
+  FETCHING: "fetching",
+  COLLECTING: "collecting",
+  ERROR: "error",
+} as const;
+
+interface BlazePoseLandmarks {
+  x: number,
+  y: number,
+  z: number,
+  visibility?: number;
+}
+
+type PoseStatus = typeof STATUS[keyof typeof STATUS]
+
+export const usePoseSequence = () => {
+  const [latestPrediction, setLatestPrediction] = useState<number[] | null>(null);
+  const [status, setStatus] = useState<PoseStatus>(STATUS.IDLE);
+
+  const latestPredictionRef = useRef<number[] | null>(null);
+  const landmarkSequence = useRef<number[][]>([]);
+  const isReadyToPredict = useRef<boolean>(true);
+  const videoFrameCounterRef = useRef<number>(0);
+
+  const sendSequenceForPrediction = useCallback(async (exerciseName: string) => {
+
+    if (landmarkSequence.current.length < 20 || !isReadyToPredict.current) {
+      console.log(`Not ready to predict: sequence length=${landmarkSequence.current.length}, isReady=${isReadyToPredict.current}`);
+      return;
+    }
+
+    console.log("Starting prediction API call...");
+    setStatus(STATUS.FETCHING);
+    isReadyToPredict.current = false;
+
+    try {
+      const url = `${API_BASE_URL}/predict/api/predict/`;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          list_landmarks: landmarkSequence.current,
+          exercise_name: exerciseName
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`API call failed with status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      const newPrediction = result.prediction[0]
+
+      console.log(`Received prediction from API: [${newPrediction.join(', ')}]`);
+
+      setLatestPrediction(newPrediction);
+      latestPredictionRef.current = newPrediction;
+
+      setStatus(STATUS.COLLECTING);
+
+    } catch (error) {
+      console.error("Error during calling prediction API: ", error)
+      setStatus(STATUS.ERROR)
+
+    } finally {
+      isReadyToPredict.current = true;
+      console.log("Prediction cycle completed, ready for next prediction");
+    }
+  }, [])
+
+  const processFrame = useCallback(async (ohe: number[], landmarks: BlazePoseLandmarks[], exerciseName: string) => {
+    videoFrameCounterRef.current++;
+    
+    const filteredLandmarks = KEYPOINTS_IDX.map(index => landmarks[index]).flatMap(lm => [lm.x, lm.y, lm.z]);
+    const frameData: number[] = [...ohe, ...filteredLandmarks];
+
+    if (landmarkSequence.current.length >= 20) {
+      landmarkSequence.current.shift();
+    }
+
+    landmarkSequence.current.push(frameData)
+
+    if (videoFrameCounterRef.current % 10 === 0) { // Log every 10 frames to avoid spam
+      console.log(`Frame ${videoFrameCounterRef.current}: sequence length=${landmarkSequence.current.length}/20`);
+    }
+
+    if (landmarkSequence.current.length === 20 && isReadyToPredict.current) {
+      console.log(`Sending sequence for prediction, exercise: ${exerciseName}, sequence length: ${landmarkSequence.current.length}`);
+      sendSequenceForPrediction(exerciseName)
+    }
+  }, [sendSequenceForPrediction])
+
+  return { latestPrediction, latestPredictionRef, processFrame, status }
+}

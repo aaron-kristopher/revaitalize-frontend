@@ -1,0 +1,32 @@
+import { useLocation } from "react-router-dom";
+import { useSidebar } from "@/shared/context/SidebarContext";
+import AccountToggle from "./AccountToggle";
+import RouteSelect from "./RouteSelect";
+import SidebarLogo from "./SidebarLogo";
+
+function Sidebar() {
+  const { isSidebarOpen } = useSidebar();
+  const location = useLocation();
+
+  const collapsedWidth = '70px';
+  const expandedWidth = '240px';
+
+  return (
+    <nav
+      className="hidden sm:flex sticky top-0 h-screen flex-col shrink-0 text-white p-3 transition-all duration-300 ease-in-out bg-gradient-to-b from-[#023047] to-[#003B6D]"
+      style={{
+        width: isSidebarOpen ? expandedWidth : collapsedWidth,
+      }}
+    >
+      <SidebarLogo open={isSidebarOpen} />
+
+      <div className="flex-1">
+        <RouteSelect open={isSidebarOpen} currentLocation={location.pathname} />
+      </div>
+
+      <AccountToggle open={isSidebarOpen} currentLocation={location.pathname} />
+    </nav>
+  );
+}
+
+export default Sidebar;
