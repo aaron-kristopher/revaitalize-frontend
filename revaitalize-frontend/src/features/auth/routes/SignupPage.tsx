@@ -14,6 +14,7 @@ import {
 } from "@/shared/components/ui/card";
 
 import BackgroundOrbs from "@/features/auth/components/BackgroundOrbs";
+import TermsDialog from "@/features/auth/components/TermsDialog";
 import { useSignup } from "@/features/auth/hooks/useSignup";
 
 export const SignupPage: React.FC = () => {
@@ -21,10 +22,6 @@ export const SignupPage: React.FC = () => {
 
     const [showPassword, setShowPassword] = useState<boolean>(false);
     const [agreedToTerms, setAgreedToTerms] = useState<boolean>(false);
-
-    const handleTermsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setAgreedToTerms(e.target.checked);
-    };
 
     return (
         <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-r from-[#002356] to-[#004DBC] p-4 sm:p-8">
@@ -201,16 +198,16 @@ export const SignupPage: React.FC = () => {
                                 type="checkbox"
                                 id="terms"
                                 checked={agreedToTerms}
-                                onChange={handleTermsChange}
-                                className="mt-1 h-5 w-5 shrink-0 cursor-pointer appearance-none rounded-md border-2 border-slate-400/80 bg-white/10 checked:border-sky-400 checked:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 focus:ring-offset-transparent"
+                                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                                className="mt-1 h-5 w-5 ..."
                             />
                             <Label
                                 htmlFor="terms"
-                                className="cursor-pointer text-sm leading-relaxed text-slate-300">
+                                className="cursor-pointer text-sm leading-relaxed text-slate-300"
+                            >
                                 I agree to the{" "}
-                                <span className="font-medium text-sky-300 transition-colors hover:text-white hover:underline">
-                                    Terms & Conditions
-                                </span>
+                                {/* --- FIX: Replace the span and Dialog with the new component --- */}
+                                <TermsDialog />
                             </Label>
                         </div>
 
