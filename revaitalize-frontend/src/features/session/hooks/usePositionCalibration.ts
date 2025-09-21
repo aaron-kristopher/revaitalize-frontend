@@ -120,9 +120,6 @@ export const usePositionCalibration = (webcamRef: React.RefObject<Webcam | null>
     animationFrameIdRef.current = requestAnimationFrame(checkLoop);
   }, [isChecking, landmarkerStatus, poseLandmarker, webcamRef]);
 
-  const [isLandmarkerClosed, setIsLandmarkerClosed] = useState<boolean>(false);
-  const isLandmarkerClosedRef = useRef<boolean>(isLandmarkerClosed);
-
   // This effect manages the countdown timer
   useEffect(() => {
     // If we are in position and there is no timer running, start one.

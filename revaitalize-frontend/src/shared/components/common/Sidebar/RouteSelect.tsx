@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Home, User, BarChart, Camera } from 'lucide-react';
+import { Home, User, BarChart } from 'lucide-react';
 import { type LucideIcon } from 'lucide-react';
 import { Button } from "@/shared/components/ui/button";
 
