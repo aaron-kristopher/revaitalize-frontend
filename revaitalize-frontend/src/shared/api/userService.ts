@@ -343,9 +343,15 @@ export const endSession = async (userId: number, sessionId: number, finalScore: 
  * Corresponds to `GET /users/{user_id}`
  */
 export const getUserProfile = async (userId: number): Promise<User> => {
+
+  const token = localStorage.getItem('accessToken');
+
   const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
   });
 
   if (!response.ok) {
@@ -387,7 +393,7 @@ export interface ChangePasswordPayload {
 }
 
 export const changeUserPassword = async (userId: number, payload: ChangePasswordPayload): Promise<{ message: string }> => {
-  const token = localStorage.getItem('accessToken'); 
+  const token = localStorage.getItem('accessToken');
 
   const response = await fetch(`${API_BASE_URL}/users/${userId}/change-password`, {
     method: 'POST',
