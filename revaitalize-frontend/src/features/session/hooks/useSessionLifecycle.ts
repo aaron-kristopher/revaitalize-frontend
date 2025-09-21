@@ -59,8 +59,8 @@ export const useSessionLifecycle = (
     const allowedDays = Array.isArray(custom)
       && custom.length === scheduleCount
       && custom.every((d: number) => d >= 0 && d <= 6)
-        ? custom
-        : defaultConfig.allowedDays;
+      ? custom
+      : defaultConfig.allowedDays;
     return { allowedDays, defaultConfig } as const;
   }
 
@@ -118,8 +118,8 @@ export const useSessionLifecycle = (
     const allowedDays = Array.isArray(custom)
       && custom.length === scheduleCount
       && custom.every(d => d >= 0 && d <= 6)
-        ? custom
-        : defaultConfig.allowedDays;
+      ? custom
+      : defaultConfig.allowedDays;
 
     const today = new Date().getDay();
 
@@ -368,8 +368,8 @@ export const useSessionLifecycle = (
     const allowedDays = Array.isArray(custom)
       && custom.length === scheduleCount
       && custom.every(d => d >= 0 && d <= 6)
-        ? custom
-        : defaultConfig.allowedDays;
+      ? custom
+      : defaultConfig.allowedDays;
 
     // Determine "last day" based on allowedDays (highest weekday index)
     const lastDay = allowedDays.length ? Math.max(...allowedDays) : defaultConfig.lastDay;
@@ -529,6 +529,6 @@ export const useSessionLifecycle = (
     currentSetScoresRef,
     currentSetErrorFlagsRef,
     isTodayAllowed,
-    checkSchedulingAndGuard,
+    // checkSchedulingAndGuard,
   }
 }

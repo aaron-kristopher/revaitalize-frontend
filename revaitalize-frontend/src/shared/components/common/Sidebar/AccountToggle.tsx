@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; // Add hooks
+import { useState, useEffect } from 'react'; // Add hooks
 import { Link } from 'react-router-dom';
 import { Dumbbell } from 'lucide-react';
 import { Button } from "@/shared/components/ui/button";
@@ -45,8 +45,8 @@ function AccountToggle({ open, currentLocation }: AccountToggleProps) {
         const allowedDays = Array.isArray(custom)
           && custom.length === scheduleCount
           && custom.every((d: number) => d >= 0 && d <= 6)
-            ? custom
-            : defaultConfig.allowedDays;
+          ? custom
+          : defaultConfig.allowedDays;
         const today = new Date().getDay();
         setIsTodayAllowed(allowedDays.includes(today));
       } catch (e) {
