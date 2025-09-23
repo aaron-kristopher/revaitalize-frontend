@@ -434,7 +434,7 @@ export interface UpdateCustomScheduleDaysPayload {
 }
 
 export const updateCustomScheduleDays = async (userId: number, payload: UpdateCustomScheduleDaysPayload): Promise<OnboardingData> => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('accessToken');
 
   const response = await fetch(`${API_BASE_URL}/users/${userId}/onboarding/custom-schedule-days`, {
     method: 'PUT',
