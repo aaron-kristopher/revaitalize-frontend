@@ -1,5 +1,7 @@
 import React from "react";
 import lightLogo from '@/assets/imgs/lightVerLogo.svg';
+import { HashLink } from 'react-router-hash-link';
+
 
 const Footer: React.FC = () => {
     const currentYear: number = new Date().getFullYear();
@@ -14,7 +16,7 @@ const Footer: React.FC = () => {
                             <h3 className="text-lg font-bold mb-6 text-gray-700 pb-2 inline-block">Navigation</h3>
                             <ul className="space-y-3">
                                 <li><a href="/" className="text-gray-700 hover:text-blue-600 hover:translate-x-1 transition-all duration-300 text-sm font-medium block">Home</a></li>
-                                <li><a href="/revaitalize" className="text-gray-700 hover:text-blue-600 hover:translate-x-1 transition-all duration-300 text-sm font-medium block">RevAItalize</a></li>
+                                {/* <li><a href="/revaitalize" className="text-gray-700 hover:text-blue-600 hover:translate-x-1 transition-all duration-300 text-sm font-medium block">RevAItalize</a></li> */}
                                 <li><a href="/about" className="text-gray-700 hover:text-blue-600 hover:translate-x-1 transition-all duration-300 text-sm font-medium block">About Us</a></li>
                                 <li><a href="/faq" className="text-gray-700 hover:text-blue-600 hover:translate-x-1 transition-all duration-300 text-sm font-medium block">FAQ</a></li>
                             </ul>
@@ -24,17 +26,17 @@ const Footer: React.FC = () => {
                             <h3 className="text-lg font-bold mb-6 text-gray-700 pb-2 inline-block">Models</h3>
                             <ul className="space-y-3">
                                 <li><a href="/models" className="text-gray-700 hover:text-blue-600 hover:translate-x-1 transition-all duration-300 text-sm font-medium block">Models</a></li>
-                                <li><a href="/lstm" className="text-gray-700 hover:text-blue-600 hover:translate-x-1 transition-all duration-300 text-sm font-medium block">Long Short Term Memory</a></li>
-                                <li><a href="/blazepose" className="text-gray-700 hover:text-blue-600 hover:translate-x-1 transition-all duration-300 text-sm font-medium block">Blazepose</a></li>
+                                <li><HashLink to="/models#lstm" className="text-gray-700 hover:text-blue-600 hover:translate-x-1 transition-all duration-300 text-sm font-medium block">Long Short Term Memory</HashLink></li>
+                                <li><HashLink to="/models#blazepose" className="text-gray-700 hover:text-blue-600 hover:translate-x-1 transition-all duration-300 text-sm font-medium block">Blazepose</HashLink></li>
                             </ul>
                         </div>
 
                         <div className="group">
                             <h3 className="text-lg font-bold mb-6 text-gray-700 pb-2 inline-block">Exercises</h3>
                             <ul className="space-y-3">
-                                <li><a href="/exercises/torso-rotation" className="text-gray-700 hover:text-blue-600 hover:translate-x-1 transition-all duration-300 text-sm font-medium block">Torso Rotation</a></li>
-                                <li><a href="/exercises/flank-stretch" className="text-gray-700 hover:text-blue-600 hover:translate-x-1 transition-all duration-300 text-sm font-medium block">Flank Stretch</a></li>
-                                <li><a href="/exercises/hiding-face" className="text-gray-700 hover:text-blue-600 hover:translate-x-1 transition-all duration-300 text-sm font-medium block">Hiding Face</a></li>
+                                <li><HashLink to="/exercises#torso-rotation" className="text-gray-700 hover:text-blue-600 hover:translate-x-1 transition-all duration-300 text-sm font-medium block">Torso Rotation</HashLink></li>
+                                <li><HashLink to="/exercises#flank-stretch" className="text-gray-700 hover:text-blue-600 hover:translate-x-1 transition-all duration-300 text-sm font-medium block">Flank Stretch</HashLink></li>
+                                <li><HashLink to="/exercises#hiding-face" className="text-gray-700 hover:text-blue-600 hover:translate-x-1 transition-all duration-300 text-sm font-medium block">Hiding Face</HashLink></li>
                             </ul>
                         </div>
 
@@ -49,12 +51,12 @@ const Footer: React.FC = () => {
 
                     <div className="flex items-center justify-center md:justify-end">
                         <div className="relative group">
-                            <div className="absolute -inset-4 bg-gradient-to-r from-blue-600/20 to-[#004DBC]/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                            <div className="relative hover:shadow-xl transition-all duration-500">
+                            <div className="absolute -inset-4 rounded-2xl group-hover:opacity-100 transition-opacity duration-500"></div>
+                            <div className="relative transition-all duration-500">
                                 <img
                                     src={lightLogo}
                                     alt="RevAItalize Logo"
-                                    className="h-32 w-auto filter drop-shadow-sm hover:scale-105 transition-transform duration-300"
+                                    className="h-32 w-auto filter hover:scale-105 transition-transform duration-300"
                                 />
                             </div>
                         </div>
