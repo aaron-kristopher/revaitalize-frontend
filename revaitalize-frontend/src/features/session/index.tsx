@@ -68,7 +68,6 @@ function SessionPage() {
     handleEndSession,
     handlePainSubmit,
     sessionScores,
-    isTodayAllowed,
   } = useSessionLifecycle(activeRequirement, videoRef);
 
   const { latestPredictionRef } = useSessionDetection({
@@ -193,19 +192,14 @@ function SessionPage() {
     return <div className="flex h-screen w-full items-center justify-center text-red-500">Error: {error}</div>;
   }
 
-  // If today is not allowed (explicit false), don't render the positioning dialog; alert is handled by lifecycle
-  const shouldShowPositionDialog = isTodayAllowed !== false;
-
   return (
     <div className="flex flex-col min-h-screen bg-slate-100 text-slate-900">
-      {shouldShowPositionDialog && (
-        <UserPositionSetupDialog
-          isOpen={!isUserPositioned}
-          onClose={() => navigate("/app")}
-          onReady={handleReadyFromDialog}
-          isSystemReady={isReadyToStart}
-        />
-      )}
+      <UserPositionSetupDialog
+        isOpen={!isUserPositioned}
+        onClose={() => navigate("/app")}
+        onReady={handleReadyFromDialog}
+        isSystemReady={isReadyToStart}
+      />
 
       <Dialog open={isPainModalOpen} onOpenChange={setIsPainModalOpen}>
         <DialogContent>
