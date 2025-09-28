@@ -50,7 +50,7 @@ const DashboardPage = () => {
     setIsModalOpen,
     selectedSession,
     handleSelectSession,
-    isDownloading, 
+    isDownloading,
     handleDownloadReport,
   } = useDashboard();
 
@@ -178,17 +178,17 @@ const DashboardPage = () => {
                     <TabsTrigger value="this_month">This Month</TabsTrigger>
                   </TabsList>
                   <Button
-                      variant="outline"
-                      className="w-full sm:w-auto"
-                      onClick={handleDownloadReport}
-                      disabled={isDownloading || isLoading || sessions.length === 0}
+                    variant="outline"
+                    className="w-full sm:w-auto"
+                    onClick={handleDownloadReport}
+                    disabled={isDownloading || isLoading || sessions.length === 0}
                   >
-                      {isDownloading ? (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                          <Download className="w-4 h-4 mr-2" />
-                      )}
-                      {isDownloading ? 'Preparing Report...' : 'Download Report'}
+                    {isDownloading ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Download className="w-4 h-4 mr-2" />
+                    )}
+                    {isDownloading ? 'Preparing Report...' : 'Download Report'}
                   </Button>
                 </div>
               </div>

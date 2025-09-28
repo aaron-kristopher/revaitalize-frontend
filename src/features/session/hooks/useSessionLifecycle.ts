@@ -46,93 +46,13 @@ export const useSessionLifecycle = (
   // Add ref to track error flags for each rep in the current set
   const currentSetErrorFlagsRef = useRef<string[]>([]);
 
-  // New: track if today is allowed (null = unknown/loading)
-  const [isTodayAllowed, setIsTodayAllowed] = useState<boolean | null>(null);
-  const hasRunGuardRef = useRef<boolean>(false);
-  const hasShownAlertRef = useRef<boolean>(false);
-
-  // Helper: compute allowed days from profile
-  const computeAllowedDays = (profile: any) => {
-    const scheduleCount = profile.onboarding_data?.preferred_schedule || 3;
-    const defaultConfig = SCHEDULE_CONFIG[scheduleCount as keyof typeof SCHEDULE_CONFIG];
-    const custom = profile.onboarding_data?.custom_allowed_days;
-    const allowedDays = Array.isArray(custom)
-      && custom.length === scheduleCount
-      && custom.every((d: number) => d >= 0 && d <= 6)
-      ? custom
-      : defaultConfig.allowedDays;
-    return { allowedDays, defaultConfig } as const;
-  }
-
-  // New: early scheduling guard; shows alert and redirects if not allowed
-  const checkSchedulingAndGuard = useCallback(async () => {
-    if (hasRunGuardRef.current) return isTodayAllowed ?? false;
-    hasRunGuardRef.current = true;
-
-    if (!user) {
-      setIsTodayAllowed(false);
-      return false;
-    }
-    try {
-      const profile = await getUserProfile(user.id);
-      const { allowedDays } = computeAllowedDays(profile);
-      const today = new Date().getDay();
-      const allowed = allowedDays.includes(today);
-      setIsTodayAllowed(allowed);
-
-      if (!allowed) {
-        if (!hasShownAlertRef.current) {
-          hasShownAlertRef.current = true;
-          toggleAlert("Today is not a scheduled exercise day. Please come back on your next scheduled day.");
-          setTimeout(() => navigate("/app"), 2500);
-        }
-        return false;
-      }
-      return true;
-    } catch (e) {
-      setIsTodayAllowed(false);
-      if (!hasShownAlertRef.current) {
-        hasShownAlertRef.current = true;
-        toggleAlert("Unable to verify schedule. Please try again later.");
-        setTimeout(() => navigate("/app"), 2500);
-      }
-      return false;
-    }
-  }, [user, navigate, isTodayAllowed]);
-
-  useEffect(() => {
-    // Run the early guard as soon as lifecycle is used
-    checkSchedulingAndGuard();
-  }, [checkSchedulingAndGuard]);
+  // Remove all scheduling guard logic - this is now handled by the sidebar
 
   const handleStartSession = useCallback(async () => {
     if (!user || !activeRequirement)
       return;
 
     console.log("Starting session...");
-
-    const profile = await getUserProfile(user.id);
-    const scheduleCount = profile.onboarding_data?.preferred_schedule || 3;
-    const defaultConfig = SCHEDULE_CONFIG[scheduleCount as keyof typeof SCHEDULE_CONFIG];
-    const custom = profile.onboarding_data?.custom_allowed_days;
-    const allowedDays = Array.isArray(custom)
-      && custom.length === scheduleCount
-      && custom.every(d => d >= 0 && d <= 6)
-      ? custom
-      : defaultConfig.allowedDays;
-
-    const today = new Date().getDay();
-
-    console.log("Allowed days:", allowedDays);
-
-    if (!allowedDays.includes(today)) {
-      if (!hasShownAlertRef.current) {
-        hasShownAlertRef.current = true;
-        toggleAlert("Today is not a scheduled exercise day. Please come back on your next scheduled day.");
-        setTimeout(() => navigate("/app"), 2500);
-      }
-      return;
-    }
 
     try {
       const newSession = await startSession(user.id, activeRequirement.exercise_id);
@@ -528,7 +448,5 @@ export const useSessionLifecycle = (
     isStartingNewSetRef,
     currentSetScoresRef,
     currentSetErrorFlagsRef,
-    isTodayAllowed,
-    // checkSchedulingAndGuard,
   }
 }
