@@ -130,7 +130,7 @@ const Option = ({ to, Icon, title, open, isDisabled = false, tooltipText, isLoad
       variant="ghost"
       className={`my-1 relative flex h-11 items-center rounded-md transition-colors duration-200 hover:bg-white/5 hover:text-white ${open ? 'w-full px-4 justify-start' : 'w-full justify-center px-0'
         } ${isDisabled
-          ? "text-slate-500 cursor-not-allowed opacity-50"
+          ? "text-slate-500 pointer-events-none cursor-not-allowed opacity-50"
           : isActive
             ? "text-white bg-white/5"
             : "text-slate-300"
@@ -155,9 +155,7 @@ const Option = ({ to, Icon, title, open, isDisabled = false, tooltipText, isLoad
       <Tooltip>
         <TooltipTrigger asChild>
           <div>
-            <NavLink to={to} end={to === '/app'}>
-              {({ isActive }) => buttonContent({ isActive })}
-            </NavLink>
+            {buttonContent({ isActive: false })}
           </div>
         </TooltipTrigger>
         <TooltipContent>
