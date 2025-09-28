@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowRight, CheckCircle, Globe, Heart } from "lucide-react";
+import { ArrowRight, Globe } from "lucide-react";
 import doctors from '@/assets/imgs/doctors.png';
 import flankStretch from '@/assets/imgs/fs-illustration.svg';
 import hidingFace from '@/assets/imgs/hf-illustration.svg';
@@ -15,21 +15,21 @@ import ex from '@/assets/imgs/exercise.png';
 import { Link } from 'react-router-dom';
 
 type Feature = {
-  icon: string;
-  title: string;
-  description: string;
+    icon: string;
+    title: string;
+    description: string;
 };
 
 type Exercise = {
-  image: string;
-  title: string;
-  description: string;
-  duration: string;
+    image: string;
+    title: string;
+    description: string;
+    duration: string;
 };
 
 type Service = {
-  title: string;
-  description: string;
+    title: string;
+    description: string;
 };
 
 const LandingPage: React.FC = () => {
@@ -57,7 +57,7 @@ const LandingPage: React.FC = () => {
 
     return (
         <div className="overflow-x-hidden">
-        {/* HERO SECTION */}
+            {/* HERO SECTION */}
             <div className="relative min-h-screen bg-gradient-to-r from-[#002356] via-[#003875] to-[#004DBC]">
                 <div className="absolute inset-0 overflow-hidden">
                     <div className="absolute top-20 left-20 h-96 w-96 rounded-full bg-white/5 blur-3xl animate-pulse"></div>
@@ -88,10 +88,10 @@ const LandingPage: React.FC = () => {
 
                             <div className="flex flex-col gap-4 sm:flex-row">
                                 <Link to="/signup">
-                                <button className="group flex items-center justify-center space-x-2 rounded-full bg-white px-8 py-4 font-bold text-[#002356] shadow-xl transition-all duration-300 hover:bg-blue-50 transform hover:scale-105 cursor-pointer">
-                                    <span>TRY OUR EXERCISES</span>
-                                    <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-                                </button>
+                                    <button className="group flex items-center justify-center space-x-2 rounded-full bg-white px-8 py-4 font-bold text-[#002356] shadow-xl transition-all duration-300 hover:bg-blue-50 transform hover:scale-105 cursor-pointer">
+                                        <span>TRY OUR EXERCISES</span>
+                                        <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                                    </button>
                                 </Link>
                             </div>
                         </div>
@@ -121,9 +121,9 @@ const LandingPage: React.FC = () => {
                                     What is RevAItalize?
                                 </h2>
                                 <p className="text-lg leading-relaxed text-gray-600">
-                                RevAItalize is a smart virtual companion designed to guide you through your post-rehabilitation journey. 
-                                We use artificial intelligence to analyze your exercise form in real-time, 
-                                providing the expert guidance you need to heal properly and confidently.
+                                    RevAItalize is a smart virtual companion designed to guide you through your post-rehabilitation journey.
+                                    We use artificial intelligence to analyze your exercise form in real-time,
+                                    providing the expert guidance you need to heal properly and confidently.
                                 </p>
                             </div>
                             {/* Features */}
@@ -175,7 +175,7 @@ const LandingPage: React.FC = () => {
                                         <p className="font-medium italic text-[#002356]">
                                             "To ensure healthy lives and promote well-being for all people."
                                         </p>
-                                    </div>                                      
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -205,9 +205,9 @@ const LandingPage: React.FC = () => {
                             <div
                                 key={index}
                                 className="transform rounded-2xl bg-white/10 p-6 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:bg-white/15">
-                                    <div className="mb-4 text-4xl"><img src={feature.icon} className="w-12 h-12" /></div>
-                                    <h3 className="mb-3 text-xl font-semibold text-white">{feature.title}</h3>
-                                    <p className="text-blue-100">{feature.description}</p>
+                                <div className="mb-4 text-4xl"><img src={feature.icon} className="w-12 h-12" /></div>
+                                <h3 className="mb-3 text-xl font-semibold text-white">{feature.title}</h3>
+                                <p className="text-blue-100">{feature.description}</p>
                             </div>
                         ))}
                     </div>
@@ -276,8 +276,8 @@ const LandingPage: React.FC = () => {
                                     <div
                                         key={index}
                                         className="rounded-xl bg-white/10 p-6 backdrop-blur-sm transition-all duration-300 hover:bg-white/15">
-                                            <h4 className="mb-2 text-xl font-semibold">{service.title}</h4>
-                                            <p className="text-blue-100">{service.description}</p>
+                                        <h4 className="mb-2 text-xl font-semibold">{service.title}</h4>
+                                        <p className="text-blue-100">{service.description}</p>
                                     </div>
                                 ))}
                             </div>
