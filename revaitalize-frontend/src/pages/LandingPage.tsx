@@ -4,6 +4,15 @@ import doctors from '@/assets/imgs/doctors.png';
 import flankStretch from '@/assets/imgs/fs-illustration.svg';
 import hidingFace from '@/assets/imgs/hf-illustration.svg';
 import torsoRotation from '@/assets/imgs/tr-illustration.svg';
+import doctor from '@/assets/imgs/doctor.png';
+import exercise from '@/assets/imgs/exercisee.png';
+import progression from '@/assets/imgs/graphic-progression.png';
+import review from '@/assets/imgs/review.png';
+import smartphone from '@/assets/imgs/smartphone.png';
+import audience from '@/assets/imgs/target-audience.png';
+import check from '@/assets/imgs/checklist.png';
+import ex from '@/assets/imgs/exercise.png';
+import { Link } from 'react-router-dom';
 
 type Feature = {
   icon: string;
@@ -25,12 +34,12 @@ type Service = {
 
 const LandingPage: React.FC = () => {
     const features: Feature[] = [
-        { icon: "💪", title: "Instant Form Correction", description: "Get immediate visual cues to let you know if you're on the right track." },
-        { icon: "📊", title: "Personalized Progress Dashboard", description: "Visualize your journey with detailed analytics. Track your consistency, see performance trends, and stay motivated by your achievements." },
-        { icon: "🧠", title: "Intelligent Focus", description: "Our AI knows which joints matter most for each exercise. It focuses its analysis on crucial areas to give you precise, relevant feedback." },
-        { icon: "📱", title: "No Special Hardware Needed", description: "RevAItalize works with the camera you already own. No need for expensive sensors or wearables to get started." },
-        { icon: "👨‍⚕️", title: "Bridge the Gap with Your Therapist", description: "Easily share objective performance data with your physical therapist, enabling them to provide better-informed advice and monitor your progress." },
-        { icon: "🛤️", title: "Stay on Track", description: "Receive real-time feedback and notifications to keep you motivated and on track." }
+        { icon: exercise, title: "Instant Form Correction", description: "Get immediate visual cues to let you know if you're on the right track." },
+        { icon: progression, title: "Personalized Progress Dashboard", description: "Visualize your journey with detailed analytics. Track your consistency, see performance trends, and stay motivated by your achievements." },
+        { icon: audience, title: "Intelligent Focus", description: "Our AI knows which joints matter most for each exercise. It focuses its analysis on crucial areas to give you precise, relevant feedback." },
+        { icon: smartphone, title: "No Special Hardware Needed", description: "RevAItalize works with the camera you already own. No need for expensive sensors or wearables to get started." },
+        { icon: doctor, title: "Bridge the Gap with Your Therapist", description: "Easily share objective performance data with your physical therapist, enabling them to provide better-informed advice and monitor your progress." },
+        { icon: review, title: "Stay on Track", description: "Receive real-time feedback and notifications to keep you motivated and on track." }
     ];
 
     const exercises: Exercise[] = [
@@ -61,7 +70,8 @@ const LandingPage: React.FC = () => {
                         <div className="space-y-8 text-white">
                             <div className="space-y-6">
                                 <div className="inline-flex items-center space-x-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur-sm">
-                                    <Heart className="h-4 w-4 text-red-400" />
+                                    {/* <Heart className="h-4 w-4 text-red-400" /> */}
+                                    <img src={ex} className="w-8 h-8" />
                                     <span>RevAItalize</span>
                                 </div>
 
@@ -77,19 +87,21 @@ const LandingPage: React.FC = () => {
                             </div>
 
                             <div className="flex flex-col gap-4 sm:flex-row">
-                                <button className="group flex items-center justify-center space-x-2 rounded-full bg-white px-8 py-4 font-bold text-[#002356] shadow-xl transition-all duration-300 hover:bg-blue-50 transform hover:scale-105">
+                                <Link to="/signup">
+                                <button className="group flex items-center justify-center space-x-2 rounded-full bg-white px-8 py-4 font-bold text-[#002356] shadow-xl transition-all duration-300 hover:bg-blue-50 transform hover:scale-105 cursor-pointer">
                                     <span>TRY OUR EXERCISES</span>
                                     <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
                                 </button>
+                                </Link>
                             </div>
                         </div>
 
                         {/* Image Section */}
                         <div className="relative flex items-center justify-center">
                             <div className="relative z-10 transform transition-transform duration-500 hover:scale-105">
-                                <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-white/20 to-transparent blur-xl"></div>
+                                <div className="absolute inset-0 rounded-3xl bg-gradient-to-r"></div>
                                 <img
-                                    className="relative z-10 h-auto w-full rounded-3xl shadow-2xl"
+                                    className="relative z-10 h-auto w-full rounded-3x1"
                                     src={doctors}
                                     alt="Doctors"
                                 />
@@ -117,7 +129,7 @@ const LandingPage: React.FC = () => {
                             {/* Features */}
                             <div className="space-y-4">
                                 <div className="flex items-start space-x-3">
-                                    <CheckCircle className="mt-1 h-6 w-6 flex-shrink-0 text-green-500" />
+                                    <img src={check} className="w-8 h-8" />
                                     <div>
                                         <h4 className="font-semibold text-[#002356]">AI-Powered Form Correction</h4>
                                         <p className="text-gray-600">
@@ -126,7 +138,7 @@ const LandingPage: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="flex items-start space-x-3">
-                                    <CheckCircle className="mt-1 h-6 w-6 flex-shrink-0 text-green-500" />
+                                    <img src={check} className="w-8 h-8" />
                                     <div>
                                         <h4 className="font-semibold text-[#002356]">Accessible Anywhere, Anytime</h4>
                                         <p className="text-gray-600">
@@ -135,7 +147,7 @@ const LandingPage: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="flex items-start space-x-3">
-                                    <CheckCircle className="mt-1 h-6 w-6 flex-shrink-0 text-green-500" />
+                                    <img src={check} className="w-8 h-8" />
                                     <div>
                                         <h4 className="font-semibold text-[#002356]">Safer, Faster Recovery</h4>
                                         <p className="text-gray-600">
@@ -193,7 +205,7 @@ const LandingPage: React.FC = () => {
                             <div
                                 key={index}
                                 className="transform rounded-2xl bg-white/10 p-6 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:bg-white/15">
-                                    <div className="mb-4 text-4xl">{feature.icon}</div>
+                                    <div className="mb-4 text-4xl"><img src={feature.icon} className="w-12 h-12" /></div>
                                     <h3 className="mb-3 text-xl font-semibold text-white">{feature.title}</h3>
                                     <p className="text-blue-100">{feature.description}</p>
                             </div>
@@ -278,9 +290,11 @@ const LandingPage: React.FC = () => {
                                     <p className="text-blue-100">Sign up for free to access our exercises and start your journey towards a stronger, healthier back today.                                    </p>
 
                                     <div className="space-y-4">
-                                        <button className="w-full transform rounded-xl bg-white px-6 py-4 font-bold text-[#002356] transition-all duration-300 hover:scale-105 hover:bg-blue-50">
-                                            Get Started Now
-                                        </button>
+                                        <Link to="/signup">
+                                            <button className="w-full transform rounded-xl bg-white px-6 py-4 font-bold text-[#002356] transition-all duration-300 hover:scale-105 hover:bg-blue-50 cursor-pointer">
+                                                Get Started Now
+                                            </button>
+                                        </Link>
                                     </div>
 
                                     <div className="border-t border-white/20 pt-6">

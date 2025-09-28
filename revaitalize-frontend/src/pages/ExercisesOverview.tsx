@@ -6,6 +6,7 @@ import torsoImg from '@/assets/imgs/tr-sitting.png';
 import flankVid from '@/assets/videos/fs-sitting.mp4';
 import hidingVid from '@/assets/videos/hf-sitting.mp4';
 import torsoVid from '@/assets/videos/tr-sitting.mp4';
+import { Link } from "react-router-dom";
 
 type Exercise = {
   id: string;
@@ -145,6 +146,7 @@ const ExercisesOverview: React.FC = () => {
                   <div className="flex flex-shrink-0 items-center justify-center bg-gray-50 p-8 lg:p-12 xl:w-[28rem]">
                     <div className="aspect-video w-full overflow-hidden rounded-2xl bg-black shadow-lg">
                       <video
+                       id={exercise.id}
                         key={exercise.id}
                         className="h-full w-full object-cover"
                         controls
@@ -165,11 +167,13 @@ const ExercisesOverview: React.FC = () => {
             Ready to Start Your Journey?
           </h3>
           <p className="mx-auto mb-8 max-w-2xl text-xl text-blue-100">
-            Lorem Ipsum is simply dummy tesxt of the printing and typesetting industry.
+            Join now and start your journey with RevAItalize.
           </p>
-          <button className="rounded-xl bg-white px-8 py-4 text-lg font-bold text-blue-600 transition-colors duration-200 hover:bg-gray-100">
+          <Link to="/signup">
+          <button className="rounded-xl bg-white px-8 py-4 text-lg font-bold text-blue-600 transition-colors duration-200 hover:bg-gray-100 cursor-pointer hover:scale-105 transition-transform ease-in-out">
             Get Started Today
           </button>
+          </Link>
         </div>
       </div>
     </div>
