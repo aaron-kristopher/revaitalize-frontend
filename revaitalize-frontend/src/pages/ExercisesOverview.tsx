@@ -25,7 +25,7 @@ const ExercisesOverview: React.FC = () => {
       image: flankImg,
       video: flankVid,
       duration: "5-10 mins",
-      description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged."
+      description: "Raise one arm straight above your head and gently bend your torso to the opposite side, reaching over to create a stretch along the side of your body. Keep your hips stable and avoid leaning forward or backward. Hold the stretch, feeling the extension along your torso and flank muscles, then return to the starting position. Repeat on the other side."
     },
     {
       id: 'hiding-face',
@@ -33,7 +33,7 @@ const ExercisesOverview: React.FC = () => {
       image: hidingImg,
       video: hidingVid,
       duration: "5-10 mins",
-      description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged."
+      description: "Begin by standing or sitting upright with your feet shoulder-width apart. Raise both elbows to shoulder level, keeping your forearms vertical and hands in front of your face as if “hiding” it. Slowly rotate both elbows inward toward each other while maintaining your posture. Focus on engaging your shoulder, upper back, and neck muscles throughout the motion. Perform this movement in a controlled manner, holding briefly at the inward rotation before returning to the starting position."
     },
     {
       id: 'torso-rotation',
@@ -41,7 +41,7 @@ const ExercisesOverview: React.FC = () => {
       image: torsoImg,
       video: torsoVid,
       duration: "5-10 mins",
-      description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged."
+      description: " Start in a stable upright position, with your feet shoulder-width apart. Raise both arms to the sides at shoulder level, forming a “T” shape. Gently rotate your upper body to one side while keeping your lower body stable, pause briefly, and then rotate to the opposite side. This exercise activates the obliques, lower back, and thoracic spine, improving core strength and rotation control."
     }
   ];
 
